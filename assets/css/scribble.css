@@ -2,3 +2,11 @@ text {
   alignment-baseline: before-edge;
   font-size: 2.5rem;
 }
+
+.drawing {
+  box-shadow: 0 0 0 3px lime;
+}
+
+.drawing * {
+  pointer-events: none;
+}

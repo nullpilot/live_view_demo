@@ -13,8 +13,9 @@ export default class LiveSocketExt extends LiveSocket {
       mousedown: "mousedown",
       mouseup: "mouseup"
     }, (e, type, view, targetEl, phxEvent, phxTarget) => {
-      const x = e.clientX
-      const y = e.clientY
+      const boundingBox = targetEl.getBoundingClientRect()
+      const x = e.clientX - boundingBox.x
+      const y = e.clientY - boundingBox.y
 
       e.preventDefault();
 
@@ -35,8 +36,9 @@ export default class LiveSocketExt extends LiveSocket {
       touchmove: "touchmove",
       mousemove: "mousemove"
     }, (e, type, view, targetEl, phxEvent, phxTarget) => {
-      const x = e.clientX
-      const y = e.clientY
+      const boundingBox = targetEl.getBoundingClientRect()
+      const x = e.clientX - boundingBox.x
+      const y = e.clientY - boundingBox.y
 
       e.preventDefault()
 
