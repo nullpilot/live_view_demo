@@ -5,8 +5,22 @@ text {
 
 .drawing {
   box-shadow: 0 0 0 3px lime;
+  margin: 0 auto;
+  display: block;
 }
 
 .drawing * {
   pointer-events: none;
+}
+
+.color {
+  width: 30px;
+  height: 20px;
+  display: block;
+}
+
+.drawing path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  shape-rendering: crispEdges;
 }

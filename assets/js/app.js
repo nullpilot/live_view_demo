@@ -18,7 +18,5 @@ import "phoenix_html"
 
 import LiveSocket from "./liveSocketDraw.js"
 
-console.log(LiveSocket);
-
-let liveSocket = new LiveSocket("/live", { logger: console.info })
+let liveSocket = new LiveSocket("/live")
 liveSocket.connect()
