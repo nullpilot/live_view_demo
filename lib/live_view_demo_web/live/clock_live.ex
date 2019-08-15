@@ -2,6 +2,8 @@ defmodule LiveViewDemoWeb.ClockLive do
   use Phoenix.LiveView
   import Calendar.Strftime
 
+  alias LiveViewDemoWeb.Endpoint, as: PubSub
+
   @point_distance 16
 
   def render(assigns) do
@@ -63,7 +65,11 @@ defmodule LiveViewDemoWeb.ClockLive do
   end
 
   def mount(_session, socket) do
-    if connected?(socket), do: :timer.send_interval(1000, self(), :tick)
+    if connected?(socket) do
+      :timer.send_interval(1000, self(), :tick)
+
+      PubSub.subscribe("room:all")
+    end
 
     socket = socket
       |> assign(%{
@@ -85,12 +91,32 @@ defmodule LiveViewDemoWeb.ClockLive do
     {:noreply, put_date(socket)}
   end
 
+  def handle_info(%{event: "draw", payload: state}, socket) do
+    {:noreply, assign(socket, :active_path, state.active_path)}
+  end
+  def handle_info(%{event: "drawend", payload: state}, socket) do
+    socket = socket
+      |> assign(:active_path, state.active_path)
+      |> assign(:paths, state.paths)
+
+    {:noreply, socket}
+  end
+  def handle_info(%{event: "clear", payload: state}, socket) do
+    socket = socket
+      |> assign(:paths, [])
+      |> assign(:active_path, {"black", 5, "", []})
+
+    {:noreply, socket}
+  end
+
   def handle_event("drawstart", coords, %{assigns: assigns} = socket) do
     %{ size: size, color: color } = assigns
 
     active_path = {color, size, "", []}
       |> add_initial_point(coords)
       |> draw_path()
+
+    PubSub.broadcast_from(self(), "room:all", "draw", %{active_path: active_path})
 
     {:noreply, assign(socket, :active_path, active_path)}
   end
@@ -100,6 +126,8 @@ defmodule LiveViewDemoWeb.ClockLive do
       |> add_point(coords)
       |> draw_path()
 
+    PubSub.broadcast_from(self(), "room:all", "draw", %{active_path: active_path})
+
     {:noreply, assign(socket, :active_path, active_path)}
   end
 
@@ -107,6 +135,8 @@ defmodule LiveViewDemoWeb.ClockLive do
     socket = socket
       |> assign(:paths, assigns.paths ++ [assigns.active_path])
       |> assign(:active_path, {"black", 5, "", []})
+
+    PubSub.broadcast_from(self(), "room:all", "drawend", %{active_path: socket.assigns.active_path, paths: socket.assigns.paths})
 
     {:noreply, socket}
   end
@@ -123,6 +153,8 @@ defmodule LiveViewDemoWeb.ClockLive do
     socket = socket
       |> assign(:paths, [])
       |> assign(:active_path, {"black", 5, "", []})
+
+    PubSub.broadcast_from(self(), "room:all", "clear", %{})
 
     {:noreply, socket}
   end
