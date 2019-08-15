@@ -1,6 +1,6 @@
 <section class="phx-hero">
   <h1>My Phrenzy Entry</h1>
-  <p><%= link "This game", to: Routes.live_path(@conn, LiveViewDemoWeb.DrawLive) %> is a basic live view in action.</p>
+  <p><%= link "This game", to: Routes.live_path(@conn, LiveViewDemoWeb.DrawLive, "demo") %> is a basic live view in action.</p>
 </section>
 
 <section class="row">

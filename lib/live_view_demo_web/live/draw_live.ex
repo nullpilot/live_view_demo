@@ -67,12 +67,11 @@ defmodule LiveViewDemoWeb.DrawLive do
   def mount(_session, socket) do
     if connected?(socket) do
       :timer.send_interval(1000, self(), :tick)
-
-      PubSub.subscribe("room:all")
     end
 
     socket = socket
       |> assign(%{
+          topic: "room:default",
           mode: :draw,
           size: 5,
           color: "black",
@@ -85,6 +84,14 @@ defmodule LiveViewDemoWeb.DrawLive do
       |> put_date
 
     {:ok, socket}
+  end
+
+  def handle_params(%{"room" => room}, _url, socket) do
+    topic = "room:" <> room
+
+    PubSub.subscribe(topic)
+
+    {:noreply, assign(socket, :topic, topic)}
   end
 
   def handle_info(:tick, socket) do
@@ -110,33 +117,37 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   def handle_event("drawstart", coords, %{assigns: assigns} = socket) do
-    %{ size: size, color: color } = assigns
+    %{ size: size, color: color, topic: topic } = assigns
 
     active_path = {color, size, "", []}
       |> add_initial_point(coords)
       |> draw_path()
 
-    PubSub.broadcast_from(self(), "room:all", "draw", %{active_path: active_path})
+    PubSub.broadcast_from(self(), topic, "draw", %{active_path: active_path})
 
     {:noreply, assign(socket, :active_path, active_path)}
   end
 
   def handle_event("draw", coords, %{assigns: assigns} = socket) do
-    active_path = assigns.active_path
+    %{ active_path: active_path, topic: topic } = assigns
+
+    active_path = active_path
       |> add_point(coords)
       |> draw_path()
 
-    PubSub.broadcast_from(self(), "room:all", "draw", %{active_path: active_path})
+    PubSub.broadcast_from(self(), topic, "draw", %{active_path: active_path})
 
     {:noreply, assign(socket, :active_path, active_path)}
   end
 
   def handle_event("drawend", _coords, %{assigns: assigns} = socket) do
+    %{ paths: paths, active_path: active_path, topic: topic } = assigns
+
     socket = socket
-      |> assign(:paths, assigns.paths ++ [assigns.active_path])
+      |> assign(:paths, paths ++ [active_path])
       |> assign(:active_path, {"black", 5, "", []})
 
-    PubSub.broadcast_from(self(), "room:all", "drawend", %{active_path: socket.assigns.active_path, paths: socket.assigns.paths})
+    PubSub.broadcast_from(self(), topic, "drawend", %{active_path: socket.assigns.active_path, paths: socket.assigns.paths})
 
     {:noreply, socket}
   end
@@ -154,7 +165,7 @@ defmodule LiveViewDemoWeb.DrawLive do
       |> assign(:paths, [])
       |> assign(:active_path, {"black", 5, "", []})
 
-    PubSub.broadcast_from(self(), "room:all", "clear", %{})
+    PubSub.broadcast_from(self(), socket.assigns.topic, "clear", %{})
 
     {:noreply, socket}
   end
