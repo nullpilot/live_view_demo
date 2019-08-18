@@ -11,9 +11,10 @@ defmodule LiveViewDemo.Application do
       # Start the Ecto repository
       LiveViewDemo.Repo,
       # Start the endpoint when the application starts
-      LiveViewDemoWeb.Endpoint
+      LiveViewDemoWeb.Endpoint,
       # Starts a worker by calling: LiveViewDemo.Worker.start_link(arg)
       # {LiveViewDemo.Worker, arg},
+      LiveViewDemo.RoomSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

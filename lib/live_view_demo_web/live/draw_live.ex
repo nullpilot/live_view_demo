@@ -3,6 +3,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   import Calendar.Strftime
 
   alias LiveViewDemoWeb.Endpoint, as: PubSub
+  alias LiveViewDemo.Room
 
   @point_distance 16
 
@@ -71,27 +72,32 @@ defmodule LiveViewDemoWeb.DrawLive do
 
     socket = socket
       |> assign(%{
-          topic: "room:default",
+          room_name: "default",
+          room_pid: nil,
           mode: :draw,
           size: 5,
           color: "black",
           active_path: {"black", 5, "", []},
-          paths: [
-            {"red", 5, "M 10,100 L 100,100 z", []},
-            {"lime", 10, "M 10,50 L 100,50 z", []}
-          ]
+          paths: []
         })
       |> put_date
 
     {:ok, socket}
   end
 
-  def handle_params(%{"room" => room}, _url, socket) do
-    topic = "room:" <> room
+  def handle_params(%{"room" => room_name}, _url, socket) do
+    if connected?(socket) do
+      {:ok, room_pid} = Room.join(room_name, "Jet")
 
-    PubSub.subscribe(topic)
+      socket = assign(socket,
+        room_pid: room_pid,
+        room_name: room_name
+      )
 
-    {:noreply, assign(socket, :topic, topic)}
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_info(:tick, socket) do
@@ -101,53 +107,71 @@ defmodule LiveViewDemoWeb.DrawLive do
   def handle_info(%{event: "draw", payload: state}, socket) do
     {:noreply, assign(socket, :active_path, state.active_path)}
   end
+
   def handle_info(%{event: "drawend", payload: state}, socket) do
-    socket = socket
-      |> assign(:active_path, state.active_path)
-      |> assign(:paths, state.paths)
-
-    {:noreply, socket}
-  end
-  def handle_info(%{event: "clear", payload: state}, socket) do
-    socket = socket
-      |> assign(:paths, [])
-      |> assign(:active_path, {"black", 5, "", []})
+    socket = assign(socket,
+      active_path: state.active_path,
+      paths: state.paths
+    )
 
     {:noreply, socket}
   end
 
-  def handle_event("drawstart", coords, %{assigns: assigns} = socket) do
-    %{ size: size, color: color, topic: topic } = assigns
+  def handle_info(%{event: "clear"}, socket) do
+    socket = assign(socket,
+      active_path: {"black", 5, "", []},
+      paths: []
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:join_room, state}, socket) do
+    socket = assign(socket,
+      active_path: state.active_path,
+      paths: state.paths
+    )
+
+    {:noreply, socket}
+  end
+
+  def handle_info(_, socket), do: {:noreply, socket}
+
+  def terminate(reason, socket) do
+    %{room_pid: room_pid} = socket.assigns
+
+    Room.leave(room_pid)
+    {:stop, reason}
+  end
+
+  def handle_event("drawstart", coords, socket) do
+    %{ size: size, color: color, room_pid: room_pid } = socket.assigns
 
     active_path = {color, size, "", []}
       |> add_initial_point(coords)
       |> draw_path()
 
-    PubSub.broadcast_from(self(), topic, "draw", %{active_path: active_path})
+    Room.draw(room_pid, active_path)
 
     {:noreply, assign(socket, :active_path, active_path)}
   end
 
-  def handle_event("draw", coords, %{assigns: assigns} = socket) do
-    %{ active_path: active_path, topic: topic } = assigns
+  def handle_event("draw", coords, socket) do
+    %{ active_path: active_path, room_pid: room_pid } = socket.assigns
 
     active_path = active_path
       |> add_point(coords)
       |> draw_path()
 
-    PubSub.broadcast_from(self(), topic, "draw", %{active_path: active_path})
+    Room.draw(room_pid, active_path)
 
     {:noreply, assign(socket, :active_path, active_path)}
   end
 
-  def handle_event("drawend", _coords, %{assigns: assigns} = socket) do
-    %{ paths: paths, active_path: active_path, topic: topic } = assigns
+  def handle_event("drawend", _coords, socket) do
+    %{ paths: paths, active_path: active_path, room_pid: room_pid } = socket.assigns
 
-    socket = socket
-      |> assign(:paths, paths ++ [active_path])
-      |> assign(:active_path, {"black", 5, "", []})
-
-    PubSub.broadcast_from(self(), topic, "drawend", %{active_path: socket.assigns.active_path, paths: socket.assigns.paths})
+    Room.draw_end(room_pid)
 
     {:noreply, socket}
   end
@@ -161,20 +185,18 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   def handle_event("clear", _, socket) do
-    socket = socket
-      |> assign(:paths, [])
-      |> assign(:active_path, {"black", 5, "", []})
-
-    PubSub.broadcast_from(self(), socket.assigns.topic, "clear", %{})
+    Room.clear(socket.assigns.room_pid)
 
     {:noreply, socket}
   end
+
+  def handle_event(_, _, socket), do: {:noreply, socket}
 
   defp put_date(socket) do
     assign(socket, date: :calendar.local_time())
   end
 
-  defp draw_path({col, size, path, points}) do
+  defp draw_path({col, size, _path, points}) do
     {col, size, draw_points(points, []), points}
   end
 
@@ -186,13 +208,13 @@ defmodule LiveViewDemoWeb.DrawLive do
     draw_points(points, ["L ", Kernel.inspect(x), ",", Kernel.inspect(y), " " | path])
   end
 
-  # Add once for the M and L instructions respectively
   defp add_initial_point(active_path, %{"x" => x, "y" => y}) do
+    # Add point once for the M and L instructions respectively
     active_path
       |> put_elem(3, [{x, y}, {x, y}])
   end
 
-  # When distance too small, update last point instead of adding new one
+  # When distance is too small, update last point instead of adding new one
   defp add_point({col, size, path, [p1, p2 | points]}, %{"x" => x, "y" => y}) do
     dist = get_distance(p1, p2)
 
