@@ -40,26 +40,41 @@ defmodule LiveViewDemoWeb.DrawLive do
       </svg>
 
       <div class="controls">
-        <div class="modes">
-          <a>Draw</a>
+        <div class="panel colors">
+          <a class="color" phx-click="color" phx-value="#fff" style="background: #fff;"></a>
+          <a class="color" phx-click="color" phx-value="#ccc" style="background: #ccc;"></a>
+          <a class="color" phx-click="color" phx-value="#f90b2b" style="background: #f90b2b;"></a>
+          <a class="color" phx-click="color" phx-value="#ff712b" style="background: #ff712b;"></a>
+          <a class="color" phx-click="color" phx-value="#ffdf28" style="background: #ffdf28;"></a>
+          <a class="color" phx-click="color" phx-value="#00dd1d" style="background: #00dd1d;"></a>
+          <a class="color" phx-click="color" phx-value="#06bafd" style="background: #06bafd;"></a>
+          <a class="color" phx-click="color" phx-value="#b700c3" style="background: #b700c3;"></a>
+          <a class="color" phx-click="color" phx-value="#e281a8" style="background: #e281a8;"></a>
+          <a class="color" phx-click="color" phx-value="#ba6645" style="background: #ba6645;"></a>
+          <br/>
+          <a class="color" phx-click="color" phx-value="#000" style="background: #000;"></a>
+          <a class="color" phx-click="color" phx-value="#444" style="background: #444;"></a>
+          <a class="color" phx-click="color" phx-value="#761d1d" style="background: #761d1d;"></a>
+          <a class="color" phx-click="color" phx-value="#ce3c15" style="background: #ce3c15;"></a>
+          <a class="color" phx-click="color" phx-value="#f49e24" style="background: #f49e24;"></a>
+          <a class="color" phx-click="color" phx-value="#005f0e" style="background: #005f0e;"></a>
+          <a class="color" phx-click="color" phx-value="#0353a0" style="background: #0353a0;"></a>
+          <a class="color" phx-click="color" phx-value="#580070" style="background: #580070;"></a>
+          <a class="color" phx-click="color" phx-value="#ab648a" style="background: #ab648a;"></a>
+          <a class="color" phx-click="color" phx-value="#7c4629" style="background: #7c4629;"></a>
         </div>
 
-        <div class="colors">
-          <a class="color" phx-click="color" phx-value="yellow" style="background: yellow;"></a>
-          <a class="color" phx-click="color" phx-value="red" style="background: red;"></a>
-          <a class="color" phx-click="color" phx-value="lime" style="background: lime;"></a>
-          <a class="color" phx-click="color" phx-value="blue" style="background: blue;"></a>
+        <div class="panel sizes">
+          <a class="btn size" phx-click="size" phx-value="5">5</a>
+          <a class="btn size" phx-click="size" phx-value="10">15</a>
+          <a class="btn size" phx-click="size" phx-value="15">15</a>
+          <a class="btn size" phx-click="size" phx-value="20">20</a>
+          <a class="btn size" phx-click="size" phx-value="30">30</a>
         </div>
 
-        <div class="sizes">
-          <a class="size" phx-click="size" phx-value="5">5</a>
-          <a class="size" phx-click="size" phx-value="10">15</a>
-          <a class="size" phx-click="size" phx-value="15">15</a>
-          <a class="size" phx-click="size" phx-value="20">20</a>
-          <a class="size" phx-click="size" phx-value="30">30</a>
+        <div class="panel misc">
+          <a class="btn clear" phx-click="clear">Clear</a>
         </div>
-
-        <a class="clear" phx-click="clear">Clear</a>
       </div>
     </div>
     """

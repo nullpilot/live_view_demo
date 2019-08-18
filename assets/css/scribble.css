@@ -4,7 +4,7 @@ text {
 }
 
 .drawing {
-  box-shadow: 0 0 0 3px lime;
+  box-shadow: 0 0 0 3px #eee;
   margin: 0 auto;
   display: block;
 }
@@ -13,14 +13,39 @@ text {
   pointer-events: none;
 }
 
+.controls {
+  padding: 2rem 0 0 0;
+}
+
+.panel {
+  margin-bottom: 1rem;
+}
+
 .color {
   width: 30px;
-  height: 20px;
-  display: block;
+  height: 30px;
+  border: 2px solid #eee;
+  display: inline-block;
+  cursor: pointer;
 }
 
 .drawing path {
   stroke-linecap: round;
   stroke-linejoin: round;
   shape-rendering: crispEdges;
+}
+
+.btn {
+  display: inline-block;
+  background: #06bafd;
+  color: #fff;
+  min-width: 2em;
+  padding: 4px 8px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.btn:hover {
+  color: #fff;
+  background: #0069d9;
 }
