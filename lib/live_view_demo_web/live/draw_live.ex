@@ -10,6 +10,8 @@ defmodule LiveViewDemoWeb.DrawLive do
   def render(assigns) do
     ~L"""
     <div class="game">
+      <div class="status"><%= @time_left %></div>
+
       <svg class="drawing" xmlns="http://www.w3.org/2000/svg"
         phx-mousedown="drawstart"
         phx-mouseup="drawend"
@@ -18,8 +20,6 @@ defmodule LiveViewDemoWeb.DrawLive do
         height="400"
         viewBox="0 0 600 400"
       >
-        <text><%= strftime!(@date, "%r") %></text>
-
         <g>
           <%= for {col, size, path, _} <- @paths do %>
             <path fill="none"
@@ -81,10 +81,6 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   def mount(_session, socket) do
-    if connected?(socket) do
-      :timer.send_interval(1000, self(), :tick)
-    end
-
     socket = socket
       |> assign(%{
           room_name: "default",
@@ -92,10 +88,10 @@ defmodule LiveViewDemoWeb.DrawLive do
           mode: :draw,
           size: 5,
           color: "black",
+          time_left: 0,
           active_path: {"black", 5, "", []},
           paths: []
         })
-      |> put_date
 
     {:ok, socket}
   end
@@ -113,10 +109,6 @@ defmodule LiveViewDemoWeb.DrawLive do
     else
       {:noreply, socket}
     end
-  end
-
-  def handle_info(:tick, socket) do
-    {:noreply, put_date(socket)}
   end
 
   def handle_info(%{event: "draw", payload: state}, socket) do
@@ -138,6 +130,14 @@ defmodule LiveViewDemoWeb.DrawLive do
       paths: []
     )
 
+    {:noreply, socket}
+  end
+
+  def handle_info(%{event: "countdown", payload: payload}, socket) do
+    {:noreply, assign(socket, time_left: payload.time_left)}
+  end
+
+  def handle_info(%{event: "end_round", payload: payload}, socket) do
     {:noreply, socket}
   end
 

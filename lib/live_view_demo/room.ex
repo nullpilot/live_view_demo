@@ -67,8 +67,11 @@ defmodule LiveViewDemo.Room do
     IO.puts("INIT ROOM NAME")
     IO.inspect(room_name)
 
+    :timer.send_interval(1000, self(), :tick)
+
     {:ok, %{
       room_name: room_name,
+      time_left: 10,
       topic: "room:" <> room_name,
       active_path: {"black", 5, "", []},
       paths: [],
@@ -134,6 +137,24 @@ defmodule LiveViewDemo.Room do
     end
 
     state = Map.put(state, :players, players)
+
+    {:noreply, state}
+  end
+
+  def handle_info(:tick, state) do
+    time_left = state.time_left - 1
+
+    PubSub.broadcast(state.topic, "countdown", %{time_left: time_left})
+
+    state = Map.put(state, :time_left, time_left)
+
+    state = if time_left === 0 do
+      PubSub.broadcast(state.topic, "end_round", %{})
+
+      Map.put(state, :time_left, 10)
+    else
+      state
+    end
 
     {:noreply, state}
   end
