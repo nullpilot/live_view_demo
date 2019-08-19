@@ -193,7 +193,7 @@ defmodule LiveViewDemoWeb.DrawLive do
     %{ size: size, color: color, room_pid: room_pid } = socket.assigns
 
     active_path = {color, size, "", []}
-      |> add_initial_point(coords)
+      |> add_point(coords)
       |> draw_path()
 
     Room.draw(room_pid, active_path)
@@ -261,12 +261,6 @@ defmodule LiveViewDemoWeb.DrawLive do
     draw_points(points, ["L ", Kernel.inspect(x), ",", Kernel.inspect(y), " " | path])
   end
 
-  defp add_initial_point(active_path, %{"x" => x, "y" => y}) do
-    # Add point once for the M and L instructions respectively
-    active_path
-      |> put_elem(3, [{x, y}, {x, y}])
-  end
-
   # When distance is too small, update last point instead of adding new one
   defp add_point({col, size, path, [p1, p2 | points]}, %{"x" => x, "y" => y}) do
     dist = get_distance(p1, p2)
@@ -276,6 +270,11 @@ defmodule LiveViewDemoWeb.DrawLive do
     else
       {col, size, path, [{x, y}, p1, p2 | points]}
     end
+  end
+
+  defp add_point({col, size, path, []}, %{"x" => x, "y" => y}) do
+    # Add point once for the M and L instructions respectively
+    {col, size, path, [{x, y}, {x, y}]}
   end
 
   defp get_distance({x1, y1}, {x2, y2}) do
