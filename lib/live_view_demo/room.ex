@@ -25,6 +25,10 @@ defmodule LiveViewDemo.Room do
     GenServer.call(room_pid, :clear)
   end
 
+  def chat_send(room_pid, message) do
+    GenServer.call(room_pid, {:chat_send, message})
+  end
+
   def leave(room_pid) do
     GenServer.cast(room_pid, {:leave, self()})
   end
@@ -33,7 +37,7 @@ defmodule LiveViewDemo.Room do
     case Registry.lookup(RoomManager, room_name) do
       [{pid, _val}] -> {:ok, pid, room_name}
       [] ->
-        IO.puts("No rooms with name #{room_name}, creating it.")
+        IO.puts("No room with name #{room_name}. Creating it now.")
         create(room_name)
     end
   end
@@ -86,9 +90,12 @@ defmodule LiveViewDemo.Room do
       score: 0
     }
 
-    state = Map.put(state, :players, [player | state.players])
+    message = {:join, player.name}
 
-    IO.puts("Player #{player.name} joined room #{state.room_name}")
+    state = state
+      |> Map.put(:players, [player | state.players])
+
+    PubSub.broadcast(state.topic, "chat", %{message: message})
 
     send(player_pid, {:join_room, state})
 
@@ -123,17 +130,28 @@ defmodule LiveViewDemo.Room do
     {:reply, :ok, state}
   end
 
+  def handle_call({:chat_send, message}, {player_pid, _}, state) do
+    player = find_player(state.players, player_pid)
+    message = {:text, player.name, message}
+
+    PubSub.broadcast(state.topic, "chat", %{message: message})
+
+    {:reply, :ok, state}
+  end
+
   def handle_cast({:leave, player_pid}, state) do
     %{players: players} = state
 
     p = Enum.find(players, fn(p) -> p.pid == player_pid end)
 
-    players = case Enum.find(players, fn(p) -> p.pid == player_pid end) do
+    players = case find_player(players, player_pid) do
       nil ->
         players
       player ->
-        IO.puts("Player #{player.name} left room #{state.room_name}")
-        Enum.reject(players, fn(p) -> p.pid == player_pid end)
+        message = {:leave, player.name}
+        PubSub.broadcast(state.topic, "chat", %{message: message})
+
+        remove_player(players, player_pid)
     end
 
     state = Map.put(state, :players, players)
@@ -157,5 +175,13 @@ defmodule LiveViewDemo.Room do
     end
 
     {:noreply, state}
+  end
+
+  defp find_player(players, pid) do
+    Enum.find(players, fn(p) -> p.pid == pid end)
+  end
+
+  defp remove_player(players, pid) do
+    Enum.reject(players, fn(p) -> p.pid == pid end)
   end
 end

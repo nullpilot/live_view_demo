@@ -39,6 +39,27 @@ defmodule LiveViewDemoWeb.DrawLive do
         </g>
       </svg>
 
+      <div class="chat">
+        <div class="messages">
+          <%= for message <- @messages do %>
+            <%= case message do %>
+              <%= {:text, user, message} -> %>
+                <div class="message"><b><%= user %></b> <%= message %></div>
+              <%= {:join, user} -> %>
+                <div class="message system"><b><%= user %></b> joined the game</div>
+              <%= {:leave, user} -> %>
+                <div class="message system"><b><%= user %></b> left the game</div>
+              <%= {:guess, user} -> %>
+                <div class="message guess"><b><%= user %></b> guessed the word</div>
+            <% end %>
+          <% end %>
+        </div>
+        <form phx-submit="chat_send">
+          <input type="text" name="message" />
+          <button type="submit" class="btn">&raquo;</button>
+        </form>
+      </div>
+
       <div class="controls">
         <div class="panel colors">
           <a class="color" phx-click="color" phx-value="#fff" style="background: #fff;"></a>
@@ -66,7 +87,7 @@ defmodule LiveViewDemoWeb.DrawLive do
 
         <div class="panel sizes">
           <a class="btn size" phx-click="size" phx-value="5">5</a>
-          <a class="btn size" phx-click="size" phx-value="10">15</a>
+          <a class="btn size" phx-click="size" phx-value="10">10</a>
           <a class="btn size" phx-click="size" phx-value="15">15</a>
           <a class="btn size" phx-click="size" phx-value="20">20</a>
           <a class="btn size" phx-click="size" phx-value="30">30</a>
@@ -89,6 +110,7 @@ defmodule LiveViewDemoWeb.DrawLive do
           size: 5,
           color: "black",
           time_left: 0,
+          messages: [],
           active_path: {"black", 5, "", []},
           paths: []
         })
@@ -141,6 +163,14 @@ defmodule LiveViewDemoWeb.DrawLive do
     {:noreply, socket}
   end
 
+  def handle_info(%{event: "chat", payload: payload}, socket) do
+    socket = assign(socket,
+      messages: socket.assigns.messages ++ [payload.message]
+    )
+
+    {:noreply, socket}
+  end
+
   def handle_info({:join_room, state}, socket) do
     socket = assign(socket,
       active_path: state.active_path,
@@ -187,6 +217,14 @@ defmodule LiveViewDemoWeb.DrawLive do
     %{ paths: paths, active_path: active_path, room_pid: room_pid } = socket.assigns
 
     Room.draw_end(room_pid)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("chat_send", %{"message" => message}, socket) do
+    %{ room_pid: room_pid } = socket.assigns
+
+    Room.chat_send(room_pid, message)
 
     {:noreply, socket}
   end
