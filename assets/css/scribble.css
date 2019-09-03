@@ -82,12 +82,8 @@ text {
 }
 
 .chat form button {
-  margin: 0;
   grid-column-start: 2;
   font-size: 2rem;
-  border: 0;
-  border-radius: 0;
-  line-height: 1;
 }
 
 .controls {
@@ -115,17 +111,26 @@ text {
   shape-rendering: crispEdges;
 }
 
-.btn {
+.btn, button {
   display: inline-block;
   background: #06bafd;
   color: #fff;
   min-width: 2em;
-  padding: 4px 8px;
+  padding: 4px 16px;
   text-align: center;
   cursor: pointer;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  font-weight: 600;
+  font-size: 1.5rem;
+  text-transform: none;
+  height: 3.8rem;
+  line-height: 3rem;
+  letter-spacing: .1rem;
 }
 
-.btn:hover {
+button:hover, .btn:hover {
   color: #fff;
   background: #0069d9;
 }
