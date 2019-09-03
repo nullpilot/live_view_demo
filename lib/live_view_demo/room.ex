@@ -5,28 +5,41 @@ defmodule LiveViewDemo.Room do
   alias LiveViewDemo.RoomList
   alias LiveViewDemo.RoomManager
 
+  @rounds_per_game 3
+  @wordpick_duration 5
+  @turn_duration 5
+  @score_duration 5
+
   def join(room_name, player_name) do
     {:ok, room_pid, _} = get(room_name)
-    {:ok, topic} = GenServer.call(room_pid, {:join, self(), player_name})
 
-    PubSub.subscribe(topic)
-    {:ok, room_pid}
+    case GenServer.call(room_pid, {:join, self(), player_name}) do
+      {:ok, room_state} ->
+        PubSub.subscribe(room_state.topic)
+        {:ok, room_pid, room_state}
+      {:error, err} ->
+        {:error, err}
+    end
+  end
+
+  def start_game(room_pid) do
+    GenServer.cast(room_pid, :start_game)
   end
 
   def draw(room_pid, active_path) do
-    GenServer.call(room_pid, {:draw, active_path})
+    GenServer.cast(room_pid, {:draw, active_path})
   end
 
   def draw_end(room_pid) do
-    GenServer.call(room_pid, :draw_end)
+    GenServer.cast(room_pid, :draw_end)
   end
 
   def clear(room_pid) do
-    GenServer.call(room_pid, :clear)
+    GenServer.cast(room_pid, :clear)
   end
 
   def chat_send(room_pid, message) do
-    GenServer.call(room_pid, {:chat_send, message})
+    GenServer.cast(room_pid, {:chat_send, self(), message})
   end
 
   def leave(room_pid) do
@@ -68,19 +81,103 @@ defmodule LiveViewDemo.Room do
   end
 
   def init(room_name) do
-    IO.puts("INIT ROOM NAME")
-    IO.inspect(room_name)
-
-    :timer.send_interval(1000, self(), :tick)
-
     {:ok, %{
+      mode: :lobby,
       room_name: room_name,
-      time_left: 10,
+      time_left: 0,
       topic: "room:" <> room_name,
       active_path: {"black", 5, "", []},
       paths: [],
-      players: []
+      players: [],
+      tref: nil
     }}
+  end
+
+  def handle_info(:start_round, state) do
+    round = state.current_round + 1
+
+    if round > @rounds_per_game do
+      send(self(), :end_game)
+
+      {:noreply, state}
+    else
+      send(self(), :start_turn)
+
+      state = state
+        |> Map.put(:current_round, round)
+        |> Map.put(:round_players, Enum.reverse(state.players))
+
+      {:noreply, state}
+    end
+  end
+
+  def handle_info(:start_turn, state) do
+    case state.round_players do
+      [player | players] ->
+        state = state
+          |> Map.put(:mode, :turn)
+          |> Map.put(:round_players, players)
+          |> start_countdown(@turn_duration)
+
+        {:noreply, state}
+      [] ->
+        send(self(), :end_round)
+        {:noreply, state}
+    end
+  end
+
+  def handle_info(:show_scores, state) do
+    state = state
+      |> Map.put(:time_left, @score_duration)
+      |> Map.put(:mode, :turn_scores)
+      |> start_countdown(@score_duration)
+      |> broadcast
+
+    {:noreply, state}
+  end
+
+  def handle_info(:end_turn, state) do
+    send(self(), :start_turn)
+
+    {:noreply, state}
+  end
+
+  def handle_info(:end_round, state) do
+    send(self(), :start_round)
+
+    {:noreply, state}
+  end
+
+  def handle_info(:end_game, state) do
+    state = state
+      |> Map.put(:mode, :lobby)
+      |> broadcast
+
+    {:noreply, state}
+  end
+
+  def handle_info(:tick, state) do
+    time_left = state.time_left - 1
+
+    if time_left === 0 do
+      cancel_timer(state.tref)
+
+      case state.mode do
+        :turn ->
+          send(self(), :show_scores)
+        :turn_scores ->
+          send(self(), :end_turn)
+        _ -> :ok
+      end
+
+      {:noreply, state}
+    else
+      state = state
+        |> Map.put(:time_left, time_left)
+        |> broadcast
+
+      {:noreply, state}
+    end
   end
 
   def handle_call({:join, player_pid, player_name}, {player_pid, _}, state) do
@@ -90,53 +187,71 @@ defmodule LiveViewDemo.Room do
       score: 0
     }
 
-    message = {:join, player.name}
+    unless find_player(state.players, player_pid) do
+      message = {:join, player.name}
 
-    state = state
-      |> Map.put(:players, [player | state.players])
+      state = state
+        |> Map.put(:players, [player | state.players])
+        |> broadcast
 
-    PubSub.broadcast(state.topic, "chat", %{message: message})
+      PubSub.broadcast(state.topic, "chat", %{message: message})
 
-    send(player_pid, {:join_room, state})
-
-    {:reply, {:ok, state.topic}, state}
+      {:reply, {:ok, state}, state}
+    else
+      {:reply, {:error, "Already joined this room."}, state}
+    end
   end
 
-  def handle_call({:draw, active_path}, {player_pid, _}, state) do
-    state = Map.put(state, :active_path, active_path)
+  def handle_cast({:draw, active_path}, state) do
+    state = state 
+      |> Map.put(:active_path, active_path)
+      |> broadcast
 
-    PubSub.broadcast_from(player_pid, state.topic, "draw", %{active_path: active_path})
-
-    {:reply, {:ok, active_path}, state}
+    {:noreply, state}
   end
 
-  def handle_call(:draw_end, {player_pid, _}, state) do
+  def handle_cast(:draw_end, state) do
     state = state
       |> Map.put(:paths, state.paths ++ [state.active_path])
       |> Map.put(:active_path, {"black", 5, "", []})
+      |> broadcast
 
-    PubSub.broadcast(state.topic, "drawend", %{active_path: state.active_path, paths: state.paths})
-
-    {:reply, :ok, state}
+    {:noreply, state}
   end
 
-  def handle_call(:clear, {player_pid, _}, state) do
+  def handle_cast(:clear, state) do
     state = state
       |> Map.put(:paths, [])
       |> Map.put(:active_path, {"black", 5, "", []})
+      |> broadcast
 
     PubSub.broadcast(state.topic, "clear", %{})
 
-    {:reply, :ok, state}
+    {:noreply, state}
   end
 
-  def handle_call({:chat_send, message}, {player_pid, _}, state) do
+  def handle_cast({:chat_send, player_pid, message}, state) do
     player = find_player(state.players, player_pid)
     message = {:text, player.name, message}
 
     PubSub.broadcast(state.topic, "chat", %{message: message})
 
-    {:reply, :ok, state}
+    {:noreply, state}
+  end
+
+  def handle_cast(:start_game, state) do
+    if state.mode === :lobby do
+      IO.puts("Starting game in room #{state.room_name}")
+      send(self(), :start_round)
+
+      state = state
+        |> Map.put(:current_round, 0)
+        |> broadcast
+
+      {:noreply, state}
+    else
+      {:noreply, state}
+    end
   end
 
   def handle_cast({:leave, player_pid}, state) do
@@ -154,27 +269,16 @@ defmodule LiveViewDemo.Room do
         remove_player(players, player_pid)
     end
 
-    state = Map.put(state, :players, players)
+    state = state
+      |> Map.put(:players, players)
+      |> broadcast
 
     {:noreply, state}
   end
 
-  def handle_info(:tick, state) do
-    time_left = state.time_left - 1
-
-    PubSub.broadcast(state.topic, "countdown", %{time_left: time_left})
-
-    state = Map.put(state, :time_left, time_left)
-
-    state = if time_left === 0 do
-      PubSub.broadcast(state.topic, "end_round", %{})
-
-      Map.put(state, :time_left, 10)
-    else
-      state
-    end
-
-    {:noreply, state}
+  defp broadcast(state) do
+    PubSub.broadcast(state.topic, "update_room", state)
+    state
   end
 
   defp find_player(players, pid) do
@@ -184,4 +288,17 @@ defmodule LiveViewDemo.Room do
   defp remove_player(players, pid) do
     Enum.reject(players, fn(p) -> p.pid == pid end)
   end
+
+  defp start_countdown(state, countdown) do
+    {:ok, tref} = :timer.send_interval(1000, self(), :tick)
+
+    cancel_timer(state.tref)
+
+    state
+      |> Map.put(:time_left, countdown)
+      |> Map.put(:tref, tref)
+  end
+
+  defp cancel_timer(nil), do: :ok
+  defp cancel_timer(tref), do: :timer.cancel(tref)
 end
