@@ -89,6 +89,11 @@ defmodule LiveViewDemo.Room do
       active_path: {"black", 5, "", []},
       paths: [],
       players: [],
+      current_round: 0,
+      num_rounds: @rounds_per_game,
+      current_player: nil,
+      round_players: nil,
+      guessword: nil,
       tref: nil
     }}
   end
@@ -96,7 +101,7 @@ defmodule LiveViewDemo.Room do
   def handle_info(:start_round, state) do
     round = state.current_round + 1
 
-    if round > @rounds_per_game do
+    if round > state.num_rounds do
       send(self(), :end_game)
 
       {:noreply, state}
@@ -116,6 +121,9 @@ defmodule LiveViewDemo.Room do
       [player | players] ->
         state = state
           |> Map.put(:mode, :turn)
+          |> Map.put(:current_player, player)
+          |> Map.put(:guess_word, "Elixir")
+          |> Map.put(:obfuscated_word, obfuscate("Elixir"))
           |> Map.put(:round_players, players)
           |> start_countdown(@turn_duration)
 
@@ -159,7 +167,7 @@ defmodule LiveViewDemo.Room do
   def handle_info(:tick, state) do
     time_left = state.time_left - 1
 
-    if time_left === 0 do
+    if time_left < 0 do
       cancel_timer(state.tref)
 
       case state.mode do
@@ -301,4 +309,8 @@ defmodule LiveViewDemo.Room do
 
   defp cancel_timer(nil), do: :ok
   defp cancel_timer(tref), do: :timer.cancel(tref)
+
+  defp obfuscate(word) do
+    Regex.replace(~r{[^-_\s]}, word, "_")
+  end
 end

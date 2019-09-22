@@ -16,6 +16,8 @@ defmodule LiveViewDemoWeb.DrawLive do
         </form>
       </div>
     <% else %>
+      <%= @room.mode %>
+
       <div class="lobby">
         <div>
           <%= for player <- @room.players do %>
@@ -29,34 +31,51 @@ defmodule LiveViewDemoWeb.DrawLive do
       </div>
 
       <div class="game">
-        <div class="status"><%= @room.time_left %></div>
+        <div class="status">
+          <div class="round">
+            <%= @room.current_round %> of
+            <%= @room.num_rounds %>
+          </div>
+          <div class="countdown">
+            <%= if @room.mode == :turn, do: @room.time_left %>
+          </div>
+          <div class="guessword">
+            <%= if @room.mode == :turn, do: @room.obfuscated_word %>
+          </div>
+        </div>
 
-        <svg class="drawing" xmlns="http://www.w3.org/2000/svg"
-          phx-mousedown="drawstart"
-          phx-mouseup="drawend"
-          phx-mousemove="draw"
-          width="600"
-          height="400"
-          viewBox="0 0 600 400"
-        >
-          <g>
-            <%= for {col, size, path, _} <- @room.paths do %>
-              <path fill="none"
-                stroke="<%= col %>"
-                stroke-width="<%= size %>"
-                d="<%= path %>"
-              /></path>
-            <% end %>
+        <div class="board">
+          <svg class="drawing" xmlns="http://www.w3.org/2000/svg"
+            phx-mousedown="drawstart"
+            phx-mouseup="drawend"
+            phx-mousemove="draw"
+            width="600"
+            height="400"
+            viewBox="0 0 600 400"
+          >
+            <g>
+              <%= for {col, size, path, _} <- @room.paths do %>
+                <path fill="none"
+                  stroke="<%= col %>"
+                  stroke-width="<%= size %>"
+                  d="<%= path %>"
+                /></path>
+              <% end %>
 
-            <%= with {col, size, path, _} <- @room.active_path do %>
-              <path class="active_path" fill="none"
-                stroke="<%= col %>"
-                stroke-width="<%= size %>"
-                d="<%= path %>"
-              /></path>
-            <% end %>
-          </g>
-        </svg>
+              <%= with {col, size, path, _} <- @room.active_path do %>
+                <path class="active_path" fill="none"
+                  stroke="<%= col %>"
+                  stroke-width="<%= size %>"
+                  d="<%= path %>"
+                /></path>
+              <% end %>
+            </g>
+          </svg>
+
+          <div class="overlay">
+            <%= @room.mode %>
+          </div>
+        </div>
 
         <div class="chat">
           <div class="messages">
@@ -224,7 +243,6 @@ defmodule LiveViewDemoWeb.DrawLive do
   def handle_event("start_game", _data, socket) do
     %{ room_pid: room_pid } = socket.assigns
 
-    IO.puts("start game")
     Room.start_game(room_pid)
 
     {:noreply, socket}

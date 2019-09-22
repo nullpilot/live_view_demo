@@ -16,10 +16,29 @@ text {
   grid-column-start: 1;
   grid-column-end: 2;
   grid-row-start: 1;
+  display: grid;
+  grid-template-columns: 80px 80px auto;
+  grid-template-rows: auto;
 }
 
-.drawing {
+.round {
+  grid-column-start: 1;
+  grid-row-start: 1;
+}
+
+.countdown {
+  grid-column-start: 2;
+  grid-row-start: 1;
+}
+.guessword {
+  grid-column-start: 3;
+  grid-row-start: 1;
+  letter-spacing: 0.25em;
+}
+
+.board {
   box-shadow: 0 0 0 3px #eee;
+  position: relative;
 
   grid-column-start: 1;
   grid-row-start: 2;
@@ -27,6 +46,19 @@ text {
 
 .drawing * {
   pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.overlay.hidden {
+  display: none;
 }
 
 .chat {
