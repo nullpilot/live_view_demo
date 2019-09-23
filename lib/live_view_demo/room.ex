@@ -113,8 +113,10 @@ defmodule LiveViewDemo.Room do
       send(self(), :start_turn)
 
       state = state
-        |> Map.put(:current_round, round)
-        |> Map.put(:round_players, Enum.reverse(state.players))
+        |> Map.merge(%{
+            current_round: round,
+            round_players: Enum.reverse(state.players)
+          })
 
       {:noreply, state}
     end
@@ -126,8 +128,10 @@ defmodule LiveViewDemo.Room do
     case state.round_players do
       [player | players] ->
         state = state
-          |> Map.put(:current_player, player)
-          |> Map.put(:round_players, players)
+          |> Map.merge(%{
+              current_player: player,
+              round_players: players
+            })
 
         send(self(), :turn_pick)
         {:noreply, state}
@@ -139,8 +143,10 @@ defmodule LiveViewDemo.Room do
 
   def handle_info(:turn_pick, state) do
     state = state
-      |> Map.put(:mode, :turn_pick)
-      |> Map.put(:word_options, ["Elixir", "Phoenix", "BEAM"])
+      |> Map.merge(%{
+          mode: :turn_pick,
+          word_options: ["Elixir", "Phoenix", "BEAM"]
+        })
       |> start_countdown(@wordpick_duration)
       |> broadcast
 
@@ -259,8 +265,10 @@ defmodule LiveViewDemo.Room do
 
   def handle_cast(:draw_end, state) do
     state = state
-      |> Map.put(:paths, state.paths ++ [state.active_path])
-      |> Map.put(:active_path, {"black", 5, "", []})
+      |> Map.merge(%{
+          paths: state.paths ++ [state.active_path],
+          active_path: {"black", 5, "", []}
+        })
       |> broadcast
 
     {:noreply, state}
@@ -268,8 +276,10 @@ defmodule LiveViewDemo.Room do
 
   def handle_cast(:clear, state) do
     state = state
-      |> Map.put(:paths, [])
-      |> Map.put(:active_path, {"black", 5, "", []})
+      |> Map.merge(%{
+          paths: [],
+          active_path: {"black", 5, "", []}
+        })
       |> broadcast
 
     PubSub.broadcast(state.topic, "clear", %{})
@@ -387,8 +397,10 @@ defmodule LiveViewDemo.Room do
     cancel_timer(state.tref)
 
     state
-      |> Map.put(:time_left, countdown)
-      |> Map.put(:tref, tref)
+      |> Map.merge(%{
+          time_left: countdown,
+          tref: tref
+        })
   end
 
   defp cancel_timer(nil), do: :ok
