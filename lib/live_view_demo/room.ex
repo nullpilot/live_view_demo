@@ -117,7 +117,9 @@ defmodule LiveViewDemo.Room do
       state = state
         |> Map.merge(%{
             current_round: round,
-            round_players: PlayerList.get_pids(state.players)
+            round_players: state.players
+              |> PlayerList.get_pids
+              |> Enum.reverse
           })
 
       {:noreply, state}
@@ -311,7 +313,11 @@ defmodule LiveViewDemo.Room do
         score = 100 + state.time_left * 10
         PubSub.broadcast(state.topic, "chat", %{message: message})
 
+        players = state.players
+          |> PlayerList.update(%{player | turn_score: score})
+
         state
+          |> Map.put(:players, players)
           |> broadcast
       :no_match ->
         message = {:text, player.name, text}
@@ -340,8 +346,6 @@ defmodule LiveViewDemo.Room do
 
   def handle_cast({:leave, player_pid}, state) do
     %{players: players} = state
-
-    IO.inspect(players)
 
     players = case PlayerList.get(players, player_pid) do
       nil ->

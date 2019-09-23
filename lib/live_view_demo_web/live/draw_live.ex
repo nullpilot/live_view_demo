@@ -2,6 +2,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   use Phoenix.LiveView
 
   alias LiveViewDemo.Room
+  alias LiveViewDemo.PlayerList
 
   @point_distance 5
 
@@ -20,8 +21,12 @@ defmodule LiveViewDemoWeb.DrawLive do
 
       <div class="lobby">
         <div>
-          <%= for player <- @room.players.players do %>
-            <div class="player"><%= player.name %></div>
+          <%= for {_pid, player} <- @room.players.players do %>
+            <div class="player">
+              <div class="player"><%= player.name %></div>
+              <div class="player"><%= player.score %></div>
+              <div class="player"><%= player.turn_score %></div>
+            </div>
           <% end %>
         </div>
 
@@ -29,6 +34,9 @@ defmodule LiveViewDemoWeb.DrawLive do
           <a phx-click="start_game" class="btn">Start Game</a>
         </div>
       </div>
+
+      
+      <%= @room.mode %>
 
       <div class="game">
         <div class="status">
@@ -72,15 +80,38 @@ defmodule LiveViewDemoWeb.DrawLive do
             </g>
           </svg>
 
-          <div class="overlay">
-            <%= @room.mode %>
-
-            <%= if @my_turn and @room.mode == :turn_pick do %>
-              <%= for {word, i} <- Enum.with_index(@room.word_options) do %>
-                <a phx-click="pick_word" phx-value="<%= i %>"><%= word %></a>
+          <%= if @room.mode == :turn_pick do %>
+            <div class="overlay pick">
+              <%= if @my_turn do %>
+                <div class="pick-words">
+                  <%= for {word, i} <- Enum.with_index(@room.word_options) do %>
+                    <a phx-click="pick_word" phx-value="<%= i %>"><%= word %></a>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="pick-msg">
+                  <b><%= @current_player.name %></b> is choosing a word
+                </div>
               <% end %>
-            <% end %>
-          </div>
+            </div>
+          <% end %>
+
+          <%= if @room.mode == :turn_scores do %>
+            <div class="overlay scores">
+              <div>
+                Turn over. The word was <b><%= @room.word %></b>.
+              </div>
+
+              <div>
+                <%= for {_pid, player} <- @room.players.players do %>
+                  <div class="player">
+                    <div class="player"><%= player.name %></div>
+                    <div class="player"><%= player.turn_score %></div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         </div>
 
         <div class="chat">
@@ -156,6 +187,7 @@ defmodule LiveViewDemoWeb.DrawLive do
           messages: [],
           size: 5,
           my_turn: false,
+          current_player: nil,
           color: "black"
           # active_path: {"black", 5, "", []},
           # paths: []
@@ -218,6 +250,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   def handle_info(%{event: "update_room", payload: room_state}, socket) do
     socket = assign(socket,
       room: room_state,
+      current_player: PlayerList.get(room_state.players, room_state.current_player_pid),
       my_turn: is_self(room_state.current_player_pid)
     )
 
