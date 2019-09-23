@@ -42,6 +42,10 @@ defmodule LiveViewDemo.Room do
     GenServer.cast(room_pid, {:chat_send, self(), message})
   end
 
+  def pick_word(room_pid, word_index) do
+    GenServer.cast(room_pid, {:pick_word, self(), word_index})
+  end
+
   def leave(room_pid) do
     GenServer.cast(room_pid, {:leave, self()})
   end
@@ -120,12 +124,36 @@ defmodule LiveViewDemo.Room do
     case state.round_players do
       [player | players] ->
         state = state
-          |> Map.put(:mode, :turn)
           |> Map.put(:current_player, player)
-          |> Map.put(:guess_word, "Elixir")
-          |> Map.put(:obfuscated_word, obfuscate("Elixir"))
+          |> Map.put(:round_players, players)
+
+        send(self(), :turn_pick)
+        {:noreply, state}
+      [] ->
+        send(self(), :end_round)
+        {:noreply, state}
+    end
+  end
+
+  def handle_info(:turn_pick, state) do
+    state = state
+      |> Map.put(:mode, :turn_pick)
+      |> Map.put(:word_options, ["Elixir", "Phoenix", "BEAM"])
+      |> start_countdown(@wordpick_duration)
+      |> broadcast
+
+    {:noreply, state}
+  end
+
+  def handle_info(:turn_guess, state) do
+    case state.round_players do
+      [player | players] ->
+        state = state
+          |> Map.put(:mode, :turn_guess)
+          |> Map.put(:current_player, player)
           |> Map.put(:round_players, players)
           |> start_countdown(@turn_duration)
+          |> broadcast
 
         {:noreply, state}
       [] ->
@@ -134,9 +162,8 @@ defmodule LiveViewDemo.Room do
     end
   end
 
-  def handle_info(:show_scores, state) do
+  def handle_info(:turn_scores, state) do
     state = state
-      |> Map.put(:time_left, @score_duration)
       |> Map.put(:mode, :turn_scores)
       |> start_countdown(@score_duration)
       |> broadcast
@@ -171,11 +198,15 @@ defmodule LiveViewDemo.Room do
       cancel_timer(state.tref)
 
       case state.mode do
-        :turn ->
-          send(self(), :show_scores)
+        :turn_pick ->
+          send(self(), :turn_guess)
+        :turn_guess ->
+          send(self(), :turn_scores)
         :turn_scores ->
           send(self(), :end_turn)
-        _ -> :ok
+        _ ->
+          IO.puts("Undefined state transition from #{state.mode}")
+          :error
       end
 
       {:noreply, state}
@@ -208,6 +239,19 @@ defmodule LiveViewDemo.Room do
     else
       {:reply, {:error, "Already joined this room."}, state}
     end
+  end
+
+  def handle_cast({:pick_word, player_pid, word_index}, state) do
+    word = Enum.at(state.word_options, String.to_integer(word_index))
+
+    state = state 
+      |> set_word(word)
+      |> broadcast
+
+    cancel_timer(state.tref)
+    send(self(), :turn_guess)
+
+    {:noreply, state}
   end
 
   def handle_cast({:draw, active_path}, state) do
@@ -309,6 +353,13 @@ defmodule LiveViewDemo.Room do
 
   defp cancel_timer(nil), do: :ok
   defp cancel_timer(tref), do: :timer.cancel(tref)
+
+  defp set_word(state, word) do
+    Map.merge(state, %{
+      word: word,
+      obfuscated_word: obfuscate(word)
+    })
+  end
 
   defp obfuscate(word) do
     Regex.replace(~r{[^-_\s]}, word, "_")

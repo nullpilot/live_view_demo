@@ -37,10 +37,10 @@ defmodule LiveViewDemoWeb.DrawLive do
             <%= @room.num_rounds %>
           </div>
           <div class="countdown">
-            <%= if @room.mode == :turn, do: @room.time_left %>
+            <%= if @room.mode == :turn_guess, do: @room.time_left %>
           </div>
           <div class="guessword">
-            <%= if @room.mode == :turn, do: @room.obfuscated_word %>
+            <%= if @room.mode == :turn_guess, do: @room.obfuscated_word %>
           </div>
         </div>
 
@@ -74,6 +74,12 @@ defmodule LiveViewDemoWeb.DrawLive do
 
           <div class="overlay">
             <%= @room.mode %>
+
+            <%= if @room.mode == :turn_pick do %>
+              <%= for {word, i} <- Enum.with_index(@room.word_options) do %>
+                <a phx-click="pick_word" phx-value="<%= i %>"><%= word %></a>
+              <% end %>
+            <% end %>
           </div>
         </div>
 
@@ -284,6 +290,14 @@ defmodule LiveViewDemoWeb.DrawLive do
     %{ room_pid: room_pid } = socket.assigns
 
     Room.chat_send(room_pid, message)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("pick_word", word_index, socket) do
+    %{ room_pid: room_pid } = socket.assigns
+
+    Room.pick_word(room_pid, word_index)
 
     {:noreply, socket}
   end
