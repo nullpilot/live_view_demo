@@ -75,7 +75,7 @@ defmodule LiveViewDemoWeb.DrawLive do
           <div class="overlay">
             <%= @room.mode %>
 
-            <%= if @room.mode == :turn_pick do %>
+            <%= if @my_turn and @room.mode == :turn_pick do %>
               <%= for {word, i} <- Enum.with_index(@room.word_options) do %>
                 <a phx-click="pick_word" phx-value="<%= i %>"><%= word %></a>
               <% end %>
@@ -155,6 +155,7 @@ defmodule LiveViewDemoWeb.DrawLive do
           room_name: nil,
           messages: [],
           size: 5,
+          my_turn: false,
           color: "black"
           # active_path: {"black", 5, "", []},
           # paths: []
@@ -216,7 +217,8 @@ defmodule LiveViewDemoWeb.DrawLive do
 
   def handle_info(%{event: "update_room", payload: room_state}, socket) do
     socket = assign(socket,
-      room: room_state
+      room: room_state,
+      my_turn: is_self(room_state.current_player)
     )
 
     {:noreply, socket}
@@ -356,4 +358,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   defp get_distance({x1, y1}, {x2, y2}) do
     :math.sqrt(:math.pow(x2 - x1, 2) + :math.pow(y2 - y1, 2))
   end
+
+  defp is_self(%{pid: pid}) when pid == self(), do: true
+  defp is_self(_), do: false
 end
