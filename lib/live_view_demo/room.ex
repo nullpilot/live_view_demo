@@ -4,6 +4,8 @@ defmodule LiveViewDemo.Room do
   alias LiveViewDemoWeb.Endpoint, as: PubSub
   alias LiveViewDemo.RoomList
   alias LiveViewDemo.RoomManager
+  alias LiveViewDemo.Player
+  alias LiveViewDemo.PlayerList
 
   @rounds_per_game 3
   @wordpick_duration 5
@@ -92,10 +94,10 @@ defmodule LiveViewDemo.Room do
       topic: "room:" <> room_name,
       active_path: {"black", 5, "", []},
       paths: [],
-      players: [],
+      players: %PlayerList{},
       current_round: 0,
       num_rounds: @rounds_per_game,
-      current_player: nil,
+      current_player_pid: nil,
       round_players: nil,
       guessword: nil,
       tref: nil
@@ -115,7 +117,7 @@ defmodule LiveViewDemo.Room do
       state = state
         |> Map.merge(%{
             current_round: round,
-            round_players: Enum.reverse(state.players)
+            round_players: PlayerList.get_pids(state.players)
           })
 
       {:noreply, state}
@@ -123,14 +125,15 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_info(:start_turn, state) do
-    state = state |> reset_turn_scores
+    players = PlayerList.reset_turn_scores(state.players)
 
     case state.round_players do
-      [player | players] ->
+      [current | remaining] ->
         state = state
           |> Map.merge(%{
-              current_player: player,
-              round_players: players
+              players: players,
+              current_player_pid: current,
+              round_players: remaining
             })
 
         send(self(), :turn_pick)
@@ -145,6 +148,7 @@ defmodule LiveViewDemo.Room do
     state = state
       |> Map.merge(%{
           mode: :turn_pick,
+          word: nil,
           word_options: ["Elixir", "Phoenix", "BEAM"]
         })
       |> start_countdown(@wordpick_duration)
@@ -154,6 +158,12 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_info(:turn_guess, state) do
+    state = unless state.word do
+      set_word(state, Enum.at(state.word_options, 0))
+    else
+      state
+    end
+
     state = state
       |> Map.put(:mode, :turn_guess)
       |> start_countdown(@turn_duration)
@@ -163,8 +173,13 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_info(:turn_scores, state) do
+    players = PlayerList.update_game_scores(state.players)
+
     state = state
-      |> Map.put(:mode, :turn_scores)
+      |> Map.merge(%{
+          mode: :turn_scores,
+          players: players
+        })
       |> start_countdown(@score_duration)
       |> broadcast
 
@@ -220,18 +235,18 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_call({:join, player_pid, player_name}, {player_pid, _}, state) do
-    player = %{
+    player = %Player{
       pid: player_pid,
       name: player_name,
       turn_score: 0,
       score: 0
     }
 
-    unless find_player(state.players, player_pid) do
+    unless PlayerList.get(state.players, player_pid) do
       message = {:join, player.name}
 
       state = state
-        |> Map.put(:players, [player | state.players])
+        |> Map.put(:players, PlayerList.add(state.players, player))
         |> broadcast
 
       PubSub.broadcast(state.topic, "chat", %{message: message})
@@ -288,7 +303,8 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_cast({:chat_send, player_pid, text}, state) do
-    player = find_player(state.players, player_pid)
+    player = PlayerList.get(state.players, player_pid)
+
     state = case attempt_guess(state, player, text) do
       :match ->
         message = {:guess, player.name}
@@ -325,16 +341,16 @@ defmodule LiveViewDemo.Room do
   def handle_cast({:leave, player_pid}, state) do
     %{players: players} = state
 
-    p = Enum.find(players, fn(p) -> p.pid == player_pid end)
+    IO.inspect(players)
 
-    players = case find_player(players, player_pid) do
+    players = case PlayerList.get(players, player_pid) do
       nil ->
         players
       player ->
         message = {:leave, player.name}
         PubSub.broadcast(state.topic, "chat", %{message: message})
 
-        remove_player(players, player_pid)
+        PlayerList.remove(players, player_pid)
     end
 
     state = state
@@ -357,38 +373,16 @@ defmodule LiveViewDemo.Room do
   end
 
   defp can_guess(state, player) do
-    player.pid != state.current_player.pid && player.turn_score == 0
+    player.pid != state.current_player_pid && player.turn_score == 0
   end
 
   defp check_guess(word, guess) do
     String.downcase(word) == String.downcase(guess)
   end
 
-  defp reset_turn_scores(%{players: players} = state) do
-    players = players
-      |> Enum.map(fn player -> %{player | turn_score: 0} end)
-
-    %{state | players: players}
-  end
-
-  defp reset_game_scores(%{players: players} = state) do
-    players = players
-      |> Enum.map(fn {pid, player} -> {pid, %{player | game_score: 0}} end)
-
-    %{state | players: players}
-  end
-
   defp broadcast(state) do
     PubSub.broadcast(state.topic, "update_room", state)
     state
-  end
-
-  defp find_player(players, pid) do
-    Enum.find(players, fn(p) -> p.pid == pid end)
-  end
-
-  defp remove_player(players, pid) do
-    Enum.reject(players, fn(p) -> p.pid == pid end)
   end
 
   defp start_countdown(state, countdown) do

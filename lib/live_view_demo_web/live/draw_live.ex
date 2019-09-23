@@ -20,7 +20,7 @@ defmodule LiveViewDemoWeb.DrawLive do
 
       <div class="lobby">
         <div>
-          <%= for player <- @room.players do %>
+          <%= for player <- @room.players.players do %>
             <div class="player"><%= player.name %></div>
           <% end %>
         </div>
@@ -218,7 +218,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   def handle_info(%{event: "update_room", payload: room_state}, socket) do
     socket = assign(socket,
       room: room_state,
-      my_turn: is_self(room_state.current_player)
+      my_turn: is_self(room_state.current_player_pid)
     )
 
     {:noreply, socket}
@@ -359,6 +359,6 @@ defmodule LiveViewDemoWeb.DrawLive do
     :math.sqrt(:math.pow(x2 - x1, 2) + :math.pow(y2 - y1, 2))
   end
 
-  defp is_self(%{pid: pid}) when pid == self(), do: true
+  defp is_self(pid) when pid == self(), do: true
   defp is_self(_), do: false
 end
