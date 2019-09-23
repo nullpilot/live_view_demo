@@ -121,6 +121,8 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_info(:start_turn, state) do
+    state = state |> reset_turn_scores
+
     case state.round_players do
       [player | players] ->
         state = state
@@ -146,20 +148,12 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_info(:turn_guess, state) do
-    case state.round_players do
-      [player | players] ->
-        state = state
-          |> Map.put(:mode, :turn_guess)
-          |> Map.put(:current_player, player)
-          |> Map.put(:round_players, players)
-          |> start_countdown(@turn_duration)
-          |> broadcast
+    state = state
+      |> Map.put(:mode, :turn_guess)
+      |> start_countdown(@turn_duration)
+      |> broadcast
 
-        {:noreply, state}
-      [] ->
-        send(self(), :end_round)
-        {:noreply, state}
-    end
+    {:noreply, state}
   end
 
   def handle_info(:turn_scores, state) do
@@ -223,6 +217,7 @@ defmodule LiveViewDemo.Room do
     player = %{
       pid: player_pid,
       name: player_name,
+      turn_score: 0,
       score: 0
     }
 
@@ -282,11 +277,22 @@ defmodule LiveViewDemo.Room do
     {:noreply, state}
   end
 
-  def handle_cast({:chat_send, player_pid, message}, state) do
+  def handle_cast({:chat_send, player_pid, text}, state) do
     player = find_player(state.players, player_pid)
-    message = {:text, player.name, message}
+    state = case attempt_guess(state, player, text) do
+      :match ->
+        message = {:guess, player.name}
+        score = 100 + state.time_left * 10
+        PubSub.broadcast(state.topic, "chat", %{message: message})
 
-    PubSub.broadcast(state.topic, "chat", %{message: message})
+        state
+          |> broadcast
+      :no_match ->
+        message = {:text, player.name, text}
+        PubSub.broadcast(state.topic, "chat", %{message: message})
+
+        state
+    end
 
     {:noreply, state}
   end
@@ -326,6 +332,40 @@ defmodule LiveViewDemo.Room do
       |> broadcast
 
     {:noreply, state}
+  end
+
+  defp attempt_guess(state, player, guess) do
+    with(
+      :turn_guess <- state.mode,
+      true <- can_guess(state, player),
+      true <- check_guess(state.word, guess)
+    ) do
+      :match
+    else
+      _ -> :no_match
+    end
+  end
+
+  defp can_guess(state, player) do
+    player.pid != state.current_player.pid && player.turn_score == 0
+  end
+
+  defp check_guess(word, guess) do
+    String.downcase(word) == String.downcase(guess)
+  end
+
+  defp reset_turn_scores(%{players: players} = state) do
+    players = players
+      |> Enum.map(fn player -> %{player | turn_score: 0} end)
+
+    %{state | players: players}
+  end
+
+  defp reset_game_scores(%{players: players} = state) do
+    players = players
+      |> Enum.map(fn {pid, player} -> {pid, %{player | game_score: 0}} end)
+
+    %{state | players: players}
   end
 
   defp broadcast(state) do
