@@ -12,6 +12,24 @@ defmodule LiveViewDemo.Room do
   @turn_duration 5
   @score_duration 5
 
+  defstruct [
+    mode: :lobby,
+    room_name: "Default",
+    topic: "room:default",
+    time_left: 0,
+    active_path: {"black", 5, "", []},
+    paths: [],
+    players: %PlayerList{},
+    current_round: 0,
+    num_rounds: @rounds_per_game,
+    current_player_pid: nil,
+    round_players: [],
+    guessword: nil,
+    word: "",
+    obfuscated_word: "",
+    tref: nil
+  ]
+
   def join(room_name, player_name) do
     {:ok, room_pid, _} = get(room_name)
 
@@ -87,20 +105,10 @@ defmodule LiveViewDemo.Room do
   end
 
   def init(room_name) do
-    {:ok, %{
+    {:ok, %__MODULE__{
       mode: :lobby,
       room_name: room_name,
-      time_left: 0,
       topic: "room:" <> room_name,
-      active_path: {"black", 5, "", []},
-      paths: [],
-      players: %PlayerList{},
-      current_round: 0,
-      num_rounds: @rounds_per_game,
-      current_player_pid: nil,
-      round_players: nil,
-      guessword: nil,
-      tref: nil
     }}
   end
 
