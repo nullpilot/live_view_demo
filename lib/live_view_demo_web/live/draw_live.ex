@@ -189,8 +189,6 @@ defmodule LiveViewDemoWeb.DrawLive do
           my_turn: false,
           current_player: nil,
           color: "black"
-          # active_path: {"black", 5, "", []},
-          # paths: []
         })
 
     {:ok, socket}
@@ -208,36 +206,6 @@ defmodule LiveViewDemoWeb.DrawLive do
       {:noreply, socket}
     end
   end
-
-  # def handle_info(%{event: "draw", payload: payload}, socket) do
-  #   {:noreply, assign(socket, :active_path, payload.active_path)}
-  # end
-
-  # def handle_info(%{event: "drawend", payload: payload}, socket) do
-  #   socket = assign(socket,
-  #     active_path: payload.active_path,
-  #     paths: payload.paths
-  #   )
-
-  #   {:noreply, socket}
-  # end
-
-  # def handle_info(%{event: "clear"}, socket) do
-  #   socket = assign(socket,
-  #     active_path: {"black", 5, "", []},
-  #     paths: []
-  #   )
-
-  #   {:noreply, socket}
-  # end
-
-  # def handle_info(%{event: "countdown", payload: payload}, socket) do
-  #   {:noreply, assign(socket, time_left: payload.time_left)}
-  # end
-
-  # def handle_info(%{event: "end_round", payload: _payload}, socket) do
-  #   {:noreply, socket}
-  # end
 
   def handle_info(%{event: "chat", payload: payload}, socket) do
     socket = assign(socket,
