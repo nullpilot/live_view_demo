@@ -30,7 +30,12 @@ module.exports = (env, options) => ({
       },
       {
         test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader']
+        use: [
+          MiniCssExtractPlugin.loader,
+          { loader: 'css-loader', options: { importLoaders: 1 } },
+          // path is needed to prevent error with importing from deps
+          { loader: 'postcss-loader', options: { config: { path: './' } } }
+        ]
       }
     ]
   },
