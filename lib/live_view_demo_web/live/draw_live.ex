@@ -7,174 +7,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   @point_distance 5
 
   def render(assigns) do
-    ~L"""
-
-    <%= if @mode == :init do %>
-      <div class="start">
-        <form phx-submit="set_user">
-          <input type="text" name="username" />
-          <button type="submit" class="btn">Join</button>
-        </form>
-      </div>
-    <% else %>
-      <%= @room.mode %>
-
-      <div class="lobby">
-        <div>
-          <%= for {_pid, player} <- @room.players.players do %>
-            <div class="player">
-              <div class="player"><%= player.name %></div>
-              <div class="player"><%= player.score %></div>
-              <div class="player"><%= player.turn_score %></div>
-            </div>
-          <% end %>
-        </div>
-
-        <div>
-          <a phx-click="start_game" class="btn">Start Game</a>
-        </div>
-      </div>
-
-      
-      <%= @room.mode %>
-
-      <div class="game">
-        <div class="status">
-          <div class="round">
-            <%= @room.current_round %> of
-            <%= @room.num_rounds %>
-          </div>
-          <div class="countdown">
-            <%= if @room.mode == :turn_guess, do: @room.time_left %>
-          </div>
-          <div class="guessword">
-            <%= if @room.mode == :turn_guess, do: @room.obfuscated_word %>
-          </div>
-        </div>
-
-        <div class="board">
-          <svg class="drawing" xmlns="http://www.w3.org/2000/svg"
-            phx-mousedown="drawstart"
-            phx-mouseup="drawend"
-            phx-mousemove="draw"
-            width="600"
-            height="400"
-            viewBox="0 0 600 400"
-          >
-            <g>
-              <%= for {col, size, path, _} <- @room.paths do %>
-                <path fill="none"
-                  stroke="<%= col %>"
-                  stroke-width="<%= size %>"
-                  d="<%= path %>"
-                /></path>
-              <% end %>
-
-              <%= with {col, size, path, _} <- @room.active_path do %>
-                <path class="active_path" fill="none"
-                  stroke="<%= col %>"
-                  stroke-width="<%= size %>"
-                  d="<%= path %>"
-                /></path>
-              <% end %>
-            </g>
-          </svg>
-
-          <%= if @room.mode == :turn_pick do %>
-            <div class="overlay pick">
-              <%= if @my_turn do %>
-                <div class="pick-words">
-                  <%= for {word, i} <- Enum.with_index(@room.word_options) do %>
-                    <a phx-click="pick_word" phx-value="<%= i %>"><%= word %></a>
-                  <% end %>
-                </div>
-              <% else %>
-                <div class="pick-msg">
-                  <b><%= @current_player.name %></b> is choosing a word
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-
-          <%= if @room.mode == :turn_scores do %>
-            <div class="overlay scores">
-              <div>
-                Turn over. The word was <b><%= @room.word %></b>.
-              </div>
-
-              <div>
-                <%= for {_pid, player} <- @room.players.players do %>
-                  <div class="player">
-                    <div class="player"><%= player.name %></div>
-                    <div class="player"><%= player.turn_score %></div>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-
-        <div class="chat">
-          <div class="messages">
-            <%= for message <- @messages do %>
-              <%= case message do %>
-                <% {:text, user, message} -> %>
-                  <div class="message"><b><%= user %></b> <%= message %></div>
-                <% {:join, user} -> %>
-                  <div class="message system"><b><%= user %></b> joined the game</div>
-                <% {:leave, user} -> %>
-                  <div class="message system"><b><%= user %></b> left the game</div>
-                <% {:guess, user} -> %>
-                  <div class="message guess"><b><%= user %></b> guessed the word</div>
-              <% end %>
-            <% end %>
-          </div>
-          <form phx-submit="chat_send">
-            <input type="text" name="message" />
-            <button type="submit" class="btn">&raquo;</button>
-          </form>
-        </div>
-
-        <div class="controls">
-          <div class="panel colors">
-            <a class="color" phx-click="color" phx-value="#fff" style="background: #fff;"></a>
-            <a class="color" phx-click="color" phx-value="#ccc" style="background: #ccc;"></a>
-            <a class="color" phx-click="color" phx-value="#f90b2b" style="background: #f90b2b;"></a>
-            <a class="color" phx-click="color" phx-value="#ff712b" style="background: #ff712b;"></a>
-            <a class="color" phx-click="color" phx-value="#ffdf28" style="background: #ffdf28;"></a>
-            <a class="color" phx-click="color" phx-value="#00dd1d" style="background: #00dd1d;"></a>
-            <a class="color" phx-click="color" phx-value="#06bafd" style="background: #06bafd;"></a>
-            <a class="color" phx-click="color" phx-value="#b700c3" style="background: #b700c3;"></a>
-            <a class="color" phx-click="color" phx-value="#e281a8" style="background: #e281a8;"></a>
-            <a class="color" phx-click="color" phx-value="#ba6645" style="background: #ba6645;"></a>
-            <br/>
-            <a class="color" phx-click="color" phx-value="#000" style="background: #000;"></a>
-            <a class="color" phx-click="color" phx-value="#444" style="background: #444;"></a>
-            <a class="color" phx-click="color" phx-value="#761d1d" style="background: #761d1d;"></a>
-            <a class="color" phx-click="color" phx-value="#ce3c15" style="background: #ce3c15;"></a>
-            <a class="color" phx-click="color" phx-value="#f49e24" style="background: #f49e24;"></a>
-            <a class="color" phx-click="color" phx-value="#005f0e" style="background: #005f0e;"></a>
-            <a class="color" phx-click="color" phx-value="#0353a0" style="background: #0353a0;"></a>
-            <a class="color" phx-click="color" phx-value="#580070" style="background: #580070;"></a>
-            <a class="color" phx-click="color" phx-value="#ab648a" style="background: #ab648a;"></a>
-            <a class="color" phx-click="color" phx-value="#7c4629" style="background: #7c4629;"></a>
-          </div>
-
-          <div class="panel sizes">
-            <a class="btn size" phx-click="size" phx-value="5">5</a>
-            <a class="btn size" phx-click="size" phx-value="10">10</a>
-            <a class="btn size" phx-click="size" phx-value="15">15</a>
-            <a class="btn size" phx-click="size" phx-value="20">20</a>
-            <a class="btn size" phx-click="size" phx-value="30">30</a>
-          </div>
-
-          <div class="panel misc">
-            <a class="btn clear" phx-click="clear">Clear</a>
-          </div>
-        </div>
-      <% end %>
-    </div>
-    """
+    Phoenix.View.render(LiveViewDemoWeb.DrawView, "index.html", assigns)
   end
 
   def mount(_session, socket) do
@@ -297,19 +130,19 @@ defmodule LiveViewDemoWeb.DrawLive do
     {:noreply, socket}
   end
 
-  def handle_event("pick_word", word_index, socket) do
+  def handle_event("pick_word", %{"word" => word}, socket) do
     %{ room_pid: room_pid } = socket.assigns
 
-    Room.pick_word(room_pid, word_index)
+    Room.pick_word(room_pid, word)
 
     {:noreply, socket}
   end
 
-  def handle_event("color", color, socket) do
+  def handle_event("color", %{"color" => color}, socket) do
     {:noreply, assign(socket, :color, color)}
   end
 
-  def handle_event("size", size, socket) do
+  def handle_event("size", %{"size" => size}, socket) do
     {:noreply, assign(socket, :size, size)}
   end
 

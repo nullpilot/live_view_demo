@@ -10,6 +10,7 @@ import css from "../css/app.css"
 // Import dependencies
 //
 import "phoenix_html"
+import {Socket} from "phoenix"
 
 // Import local files
 //
@@ -18,5 +19,5 @@ import "phoenix_html"
 
 import LiveSocket from "./liveSocketDraw.js"
 
-let liveSocket = new LiveSocket("/live")
+let liveSocket = new LiveSocket("/live", Socket)
 liveSocket.connect()
