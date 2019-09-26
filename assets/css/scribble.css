@@ -2,45 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-.game {
-  display: grid;
-  grid-template-columns: 600px auto;
-  grid-template-rows: 40px 400px auto;
+.container {
+  @apply mx-auto;
 }
 
-.status {
-  margin-bottom: 1rem;
-  text-align: center;
-  font-size: 2rem;
-  grid-column-start: 1;
-  grid-column-end: 2;
-  grid-row-start: 1;
+.logo {
+  @apply mx-auto my-8;
+
+  display: block;
+  max-width: 300px;
+  height: auto;
+}
+
+h1 {
+  @apply text-2xl mb-4 font-bold;
+}
+
+h2 {
+  @apply text-lg mb-4 font-bold;
+}
+
+input[type=text] {
+  @apply rounded-sm inline-block px-3 py-2 border border-gray-300
+}
+
+.btn {
+  @apply inline-block px-6 py-3 rounded-sm font-semibold text-sm text-center
+}
+
+.btn-primary {
+  @apply text-white bg-teal-500 
+}
+
+.btn-secondary {
+  @apply border border-teal-500 text-teal-600 
+}
+
+.players {
+  .player {
+    @apply px-4 py-2 mb-2 bg-gray-300
+  }
+
+  .player:nth-of-type(2n) {
+    @apply bg-gray-400
+  }
+}
+
+.game {
+  min-width: 960px;
   display: grid;
-  grid-template-columns: 80px 80px auto;
-  grid-template-rows: auto;
+  grid-template: auto 400px auto / 1fr 600px 1fr;
+}
+
+
+.countdown {
+  grid-area: 1 / 1 / span 1 / span 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .round {
-  grid-column-start: 1;
-  grid-row-start: 1;
+  grid-area: 1 / 3 / span 1 / span 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-.countdown {
-  grid-column-start: 2;
-  grid-row-start: 1;
-}
 .guessword {
-  grid-column-start: 3;
-  grid-row-start: 1;
+  grid-area: 1 / 2 / span 1 / span 1;
   letter-spacing: 0.25em;
+
+  @apply text-2xl text-center;
+}
+
+.playerlist {
+  grid-area: 2 / 1 / span 1 / span 1;
 }
 
 .board {
   box-shadow: 0 0 0 3px #eee;
   position: relative;
-
-  grid-column-start: 1;
-  grid-row-start: 2;
+  grid-area: 2 / 2 / span 1 / span 1;
 }
 
 .drawing * {
@@ -61,62 +101,43 @@
 }
 
 .chat {
-  grid-column-start: 2;
-  grid-row-start: 2;
-  display: grid;
+  grid-area: 2 / 3 / span 1 / span 1;
 
   box-shadow: 0 0 0 3px #eee;
-  padding: 1rem;
 
-  grid-template-columns: auto;
-  grid-template-rows: auto 4rem;
-  grid-row-gap: 1rem;
+  @apply flex flex-col p-2;
 
   .messages {
-    grid-column-start: 1;
-    grid-row-start: 1;
-
+    @apply flex-auto;
     overflow-y: scroll;
-  }
 
-  .system {
-    color: #aaa;
-    font-style: italic;
-  }
+    .system {
+      color: #aaa;
+      font-style: italic;
+    }
 
-  .guess {
-    color: #00dd1d;
+    .guess {
+      color: #00dd1d;
+    }
   }
 
   form {
-    margin: 0;
-    grid-column-start: 1;
-    grid-row-start: 2;
-
-    display: grid;
-    grid-template-columns: auto 5rem;
-    grid-template-rows: auto;
-    grid-column-gap: 1rem;
+    grid-area: 2 / 1 / span 1 / span 1;
+    @apply flex flex-initial mt-2;
 
     input {
-      margin: 0;
-      grid-column-start: 1;
-      border-radius: 0;
-      font-size: 1.6rem;
+      @apply flex-1 py-1;
     }
 
-    button {
-      grid-column-start: 2;
-      font-size: 2rem;
+    .btn {
+      @apply flex-initial py-1 px-4;
     }
   }
 }
 
 .controls {
   padding: 2rem 0 0 0;
-
-  grid-column-start: 1;
-  grid-row-start: 3;
+  grid-area: 3 / 2 / span 1 / span 1;
 }
 
 .panel {
@@ -131,13 +152,17 @@
   cursor: pointer;
 }
 
+.size {
+  @apply text-white bg-teal-500 px-4 w-12 py-2
+}
+
 .drawing path {
   stroke-linecap: round;
   stroke-linejoin: round;
   shape-rendering: crispEdges;
 }
 
-.btn, button {
+/* .btn, button {
   display: inline-block;
   background: #06bafd;
   color: #fff;
@@ -154,9 +179,9 @@
   height: 3.8rem;
   line-height: 3rem;
   letter-spacing: .1rem;
-}
+} */
 
-button:hover, .btn:hover {
+/* button:hover, .btn:hover {
   color: #fff;
   background: #0069d9;
-}
+} */
