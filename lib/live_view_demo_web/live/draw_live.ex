@@ -36,12 +36,14 @@ defmodule LiveViewDemoWeb.DrawLive do
     if connected?(socket) do
       socket = assign(socket,
         room_name: room_name
+      )
 
       {:noreply, socket}
     else
       {:noreply, socket}
     end
   end
+
   def handle_params(%{}, _url, socket) do
     room_slug = Base.url_encode64(:crypto.strong_rand_bytes(6))
     {:noreply, live_redirect(socket, to: "/draw/" <> room_slug, replace: true)}
