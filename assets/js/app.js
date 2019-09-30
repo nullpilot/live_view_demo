@@ -18,6 +18,7 @@ import {Socket} from "phoenix"
 // import socket from "./socket"
 
 import LiveSocket from "./liveSocketDraw.js"
+import Hooks from "./hooks.js"
 
-let liveSocket = new LiveSocket("/live", Socket)
+let liveSocket = new LiveSocket("/live", Socket, {hooks: Hooks})
 liveSocket.connect()

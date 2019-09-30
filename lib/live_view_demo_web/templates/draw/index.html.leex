@@ -126,17 +126,17 @@
           <%= for message <- @messages do %>
             <%= case message do %>
               <% {:text, user, message} -> %>
-                <div class="message"><b><%= user %></b> <%= message %></div>
+                <div class="message" phx-hook="ChatMessage"><b><%= user %></b> <%= message %></div>
               <% {:join, user} -> %>
-                <div class="message system"><b><%= user %></b> joined the game</div>
+                <div class="message system" phx-hook="ChatMessage"><b><%= user %></b> joined the game</div>
               <% {:leave, user} -> %>
-                <div class="message system"><b><%= user %></b> left the game</div>
+                <div class="message system" phx-hook="ChatMessage"><b><%= user %></b> left the game</div>
               <% {:guess, user} -> %>
-                <div class="message guess"><b><%= user %></b> guessed the word</div>
+                <div class="message guess" phx-hook="ChatMessage"><b><%= user %></b> guessed the word</div>
             <% end %>
           <% end %>
         </div>
-        <form phx-submit="chat_send">
+        <form phx-submit="chat_send" phx-hook="ChatInput">
           <input type="text" name="message" />
           <button type="submit" class="btn btn-primary">&raquo;</button>
         </form>
