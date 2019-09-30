@@ -160,7 +160,7 @@ defmodule LiveViewDemo.Room do
       |> Map.merge(%{
           mode: :turn_pick,
           word: nil,
-          word_options: ["Elixir", "Phoenix", "BEAM"]
+          word_options: ["Lightning", "Earth", "Mountain"]
         })
       |> start_countdown(@wordpick_duration)
       |> broadcast
