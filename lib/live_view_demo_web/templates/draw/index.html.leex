@@ -51,7 +51,7 @@
         <%= for {_pid, player} <- @room.players.players do %>
           <div class="player">
             <div class="flex">
-              <div class="rank">#??</div>
+              <div class="rank">#<%= player.rank %></div>
               <div class="name"><%= player.name %></div>
             </div>
             <div class="score"><%= player.score %></div>
@@ -132,12 +132,12 @@
         <%= if @room.mode == :game_scores do %>
           <div class="overlay scores">
             <h1>Game ended!</h1>
-            <h2>Here are the winners:</h2>
+            <h2>Here are the ranks:</h2>
 
             <div class="turn-scores">
               <%= for {_pid, player} <- sort_by_game_score(@room.players) do %>
                 <div class="player">
-                  <div class="rank">#??</div>
+                  <div class="rank">#<%= player.rank %></div>
                   <div class="score"><%= player.score %></div>
                   <div class="name"><%= player.name %></div>
                 </div>

@@ -36,8 +36,6 @@ defmodule LiveViewDemoWeb.DrawLive do
     if connected?(socket) do
       socket = assign(socket,
         room_name: room_name
-      )
-      # {:noreply, live_redirect(socket, to: Routes.live_path(socket, MyLive, page + 1))}
 
       {:noreply, socket}
     else
