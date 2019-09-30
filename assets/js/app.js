@@ -17,7 +17,7 @@ import {Socket} from "phoenix"
 // Local files can be imported directly using relative paths, for example:
 // import socket from "./socket"
 
-import LiveSocket from "./liveSocketDraw.js"
+import LiveSocket from "phoenix_live_view"
 import Hooks from "./hooks.js"
 
 let liveSocket = new LiveSocket("/live", Socket, {hooks: Hooks})

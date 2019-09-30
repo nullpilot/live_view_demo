@@ -61,9 +61,7 @@
       <div class="board">
         <svg xmlns="http://www.w3.org/2000/svg"
           class="drawing cur-<%= @size %> <%= if @my_turn, do: "active-turn", else: "turn" %>"
-          phx-mousedown="drawstart"
-          phx-mouseup="drawend"
-          phx-mousemove="draw"
+          phx-hook="Draw"
           width="600"
           height="400"
           viewBox="0 0 600 400"
