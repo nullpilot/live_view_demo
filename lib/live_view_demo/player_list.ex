@@ -21,7 +21,7 @@ defmodule LiveViewDemo.PlayerList do
 
     %{player_list | players: players}
   end
-  
+
 
   def get(player_list, pid) do
     case List.keyfind(player_list.players, pid, 0) do
@@ -34,6 +34,21 @@ defmodule LiveViewDemo.PlayerList do
     List.keymember?(player_list, pid, 0)
   end
 
+  def get_players_sorted(player_list, key) do
+    get_players_sorted(player_list, key, :asc)
+  end
+
+  def get_players_sorted(player_list, key, :asc) do
+    Enum.sort(player_list.players, fn({_, p1}, {_, p2}) ->
+      Map.get(p1, key) <= Map.get(p2, key)
+    end)
+  end
+
+  def get_players_sorted(player_list, key, :desc) do
+    Enum.sort(player_list.players, fn({_, p1}, {_, p2}) ->
+      Map.get(p1, key) >= Map.get(p2, key)
+    end)
+  end
 
   def reset_turn_scores(player_list) do
     players = player_list.players

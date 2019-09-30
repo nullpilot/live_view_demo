@@ -44,6 +44,7 @@
       </div>
       <div class="guessword">
         <%= if @room.mode == :turn_guess, do: @room.obfuscated_word %>
+        <%= if @room.mode == :turn_scores, do: @room.word %>
       </div>
 
       <div class="playerlist">
@@ -88,9 +89,14 @@
         <%= if @room.mode == :turn_pick do %>
           <div class="overlay pick">
             <%= if @my_turn do %>
+              <h1>It's your turn</h1>
+              <h2>Pick a word you want to draw</h2>
+
               <div class="pick-words">
                 <%= for {word, i} <- Enum.with_index(@room.word_options) do %>
-                  <a phx-click="pick_word" phx-value-word="<%= i %>"><%= word %></a>
+                  <div>
+                    <a class="btn btn-primary" phx-click="pick_word" phx-value-word="<%= i %>"><%= word %></a>
+                  </div>
                 <% end %>
               </div>
             <% else %>
@@ -103,15 +109,37 @@
 
         <%= if @room.mode == :turn_scores do %>
           <div class="overlay scores">
-            <div>
-              Turn over. The word was <b><%= @room.word %></b>.
-            </div>
+            <h1>Turn over!</h1>
+            <h2>The word was <span><%= @room.word %></span></h2>
 
-            <div>
-              <%= for {_pid, player} <- @room.players.players do %>
+            <div class="turn-scores">
+              <%= for {_pid, player} <- sort_by_turn_score(@room.players) do %>
                 <div class="player">
-                  <div class="player"><%= player.name %></div>
-                  <div class="player"><%= player.turn_score %></div>
+                  <div class="score">
+                    <%= if player.turn_score > 0 do %>
+                      <span>+ <%= player.turn_score %></span>
+                    <% else %>
+                      <%= player.turn_score %>
+                    <% end %>
+                  </div>
+                  <div class="name"><%= player.name %></div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <%= if @room.mode == :game_scores do %>
+          <div class="overlay scores">
+            <h1>Game ended!</h1>
+            <h2>Here are the winners:</h2>
+
+            <div class="turn-scores">
+              <%= for {_pid, player} <- sort_by_game_score(@room.players) do %>
+                <div class="player">
+                  <div class="rank">#??</div>
+                  <div class="score"><%= player.score %></div>
+                  <div class="name"><%= player.name %></div>
                 </div>
               <% end %>
             </div>

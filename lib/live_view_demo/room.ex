@@ -25,6 +25,7 @@ defmodule LiveViewDemo.Room do
     current_player_pid: nil,
     round_players: [],
     guessword: nil,
+    word_options: [],
     word: "",
     obfuscated_word: "",
     tref: nil
@@ -116,7 +117,7 @@ defmodule LiveViewDemo.Room do
     round = state.current_round + 1
 
     if round > state.num_rounds do
-      send(self(), :end_game)
+      send(self(), :game_scores)
 
       {:noreply, state}
     else
@@ -208,6 +209,20 @@ defmodule LiveViewDemo.Room do
     {:noreply, state}
   end
 
+  def handle_info(:game_scores, state) do
+    players = PlayerList.update_game_scores(state.players)
+
+    state = state
+      |> Map.merge(%{
+          mode: :game_scores,
+          players: players
+        })
+      |> start_countdown(@score_duration)
+      |> broadcast
+
+    {:noreply, state}
+  end
+
   def handle_info(:end_game, state) do
     state = state
       |> Map.put(:mode, :lobby)
@@ -229,6 +244,8 @@ defmodule LiveViewDemo.Room do
           send(self(), :turn_scores)
         :turn_scores ->
           send(self(), :end_turn)
+        :game_scores ->
+          send(self(), :end_game)
         _ ->
           IO.puts("Undefined state transition from #{state.mode}")
           :error
