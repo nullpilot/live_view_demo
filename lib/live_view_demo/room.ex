@@ -8,9 +8,9 @@ defmodule LiveViewDemo.Room do
   alias LiveViewDemo.PlayerList
 
   @rounds_per_game 3
-  @wordpick_duration 5
-  @turn_duration 5
-  @score_duration 5
+  @wordpick_duration 10
+  @turn_duration 45
+  @score_duration 7
 
   defstruct [
     mode: :lobby,
