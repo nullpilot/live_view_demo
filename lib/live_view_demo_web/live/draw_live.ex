@@ -11,6 +11,10 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   def mount(_session, socket) do
+    host = Application.fetch_env!(:live_view_demo, LiveViewDemoWeb.Endpoint)
+      |> Keyword.get(:url)
+      |> Keyword.get(:host)
+
     socket = socket
       |> assign(%{
           mode: :init,
@@ -21,7 +25,8 @@ defmodule LiveViewDemoWeb.DrawLive do
           size: 5,
           my_turn: false,
           current_player: nil,
-          color: "black"
+          color: "black",
+          host: host
         })
 
     {:ok, socket}
@@ -38,6 +43,10 @@ defmodule LiveViewDemoWeb.DrawLive do
     else
       {:noreply, socket}
     end
+  end
+  def handle_params(%{}, _url, socket) do
+    room_slug = Base.url_encode64(:crypto.strong_rand_bytes(6))
+    {:noreply, live_redirect(socket, to: "/draw/" <> room_slug, replace: true)}
   end
 
   def handle_info(%{event: "chat", payload: payload}, socket) do

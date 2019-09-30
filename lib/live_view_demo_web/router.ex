@@ -18,6 +18,7 @@ defmodule LiveViewDemoWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    live "/draw", DrawLive
     live "/draw/:room", DrawLive
   end
 
