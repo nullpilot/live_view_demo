@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.phx-disconnected::before {
+  z-index: 5;
+}
+
 .container {
   @apply mx-auto;
 }
@@ -100,6 +104,7 @@ input[type=text] {
 .board {
   box-shadow: 0 0 0 3px #eee;
   position: relative;
+  z-index: 1;
   grid-area: 2 / 2 / span 1 / span 1;
 }
 
