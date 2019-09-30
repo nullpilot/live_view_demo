@@ -91,10 +91,12 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   def handle_event("drawstart", coords, socket) do
-    %{ size: size, color: color, room_pid: room_pid } = socket.assigns
+    %{ size: size, color: color, room_pid: room_pid, size: size } = socket.assigns
+    x = coords["x"] + (size / 2)
+    y = coords["y"] + (size / 2)
 
     active_path = {color, size, "", []}
-      |> add_point(coords)
+      |> add_point([{x, y}])
       |> draw_path()
 
     Room.draw(room_pid, active_path)
@@ -103,10 +105,12 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   def handle_event("draw", coords, socket) do
-    %{ room: room, room_pid: room_pid } = socket.assigns
+    %{ room: room, room_pid: room_pid, size: size } = socket.assigns
+    x = coords["x"] + (size / 2)
+    y = coords["y"] + (size / 2)
 
     active_path = room.active_path
-      |> add_point(coords)
+      |> add_point([{x, y}])
       |> draw_path()
 
     Room.draw(room_pid, active_path)
@@ -143,7 +147,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   def handle_event("size", %{"size" => size}, socket) do
-    {:noreply, assign(socket, :size, size)}
+    {:noreply, assign(socket, :size, String.to_integer(size))}
   end
 
   def handle_event("clear", _, socket) do
@@ -174,7 +178,7 @@ defmodule LiveViewDemoWeb.DrawLive do
   end
 
   # When distance is too small, update last point instead of adding new one
-  defp add_point({col, size, path, [p1, p2 | points]}, %{"x" => x, "y" => y}) do
+  defp add_point({col, size, path, [p1, p2 | points]}, [{x, y}]) do
     dist = get_distance(p1, p2)
 
     if dist < @point_distance do
@@ -184,7 +188,7 @@ defmodule LiveViewDemoWeb.DrawLive do
     end
   end
 
-  defp add_point({col, size, path, []}, %{"x" => x, "y" => y}) do
+  defp add_point({col, size, path, []}, [{x, y}]) do
     # Add point once for the M and L instructions respectively
     {col, size, path, [{x, y}, {x, y}]}
   end

@@ -11,7 +11,7 @@
     <div class="lobby max-w-3xl mx-auto flex">
       <div class="flex-1 mx-2">      
         <div class="mb-6">
-          <h2>Lobby</h1>
+          <h2>Lobby</h2>
           <p class="mb-2">
             Invite your friends with the invite link below. Once everyone joined, start the game.
           </p>
@@ -19,7 +19,7 @@
         </div>
 
         <div class="mb-6">
-          <h2>Invite Link</h1>
+          <h2>Invite Link</h2>
           <input type="text" readonly value="InviteLinkGoesHere" class="w-full">
         </div>
       </div>
@@ -34,8 +34,10 @@
   <% else %>
     <div class="game max-w-3xl mx-auto">
       <div class="round">
-        <%= @room.current_round %> of
-        <%= @room.num_rounds %>
+        Round
+        <b><%= @room.current_round %></b>
+        of
+        <b><%= @room.num_rounds %></b>
       </div>
       <div class="countdown">
         <%= if @room.mode == :turn_guess, do: @room.time_left %>
@@ -47,15 +49,18 @@
       <div class="playerlist">
         <%= for {_pid, player} <- @room.players.players do %>
           <div class="player">
-            <div class="player"><%= player.name %></div>
-            <div class="player"><%= player.score %></div>
-            <div class="player"><%= player.turn_score %></div>
+            <div class="flex">
+              <div class="rank">#??</div>
+              <div class="name"><%= player.name %></div>
+            </div>
+            <div class="score"><%= player.score %></div>
           </div>
         <% end %>
       </div>
 
       <div class="board">
-        <svg class="drawing" xmlns="http://www.w3.org/2000/svg"
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="drawing cur-<%= @size %> <%= if @my_turn, do: "active-turn", else: "turn" %>"
           phx-mousedown="drawstart"
           phx-mouseup="drawend"
           phx-mousemove="draw"
@@ -163,15 +168,15 @@
         </div>
 
         <div class="panel sizes">
-          <a class="btn size" phx-click="size" phx-value-size="5">5</a>
-          <a class="btn size" phx-click="size" phx-value-size="10">10</a>
-          <a class="btn size" phx-click="size" phx-value-size="15">15</a>
-          <a class="btn size" phx-click="size" phx-value-size="20">20</a>
-          <a class="btn size" phx-click="size" phx-value-size="30">30</a>
+          <a class="btn size size-2" phx-click="size" phx-value-size="2"></a>
+          <a class="btn size size-5" phx-click="size" phx-value-size="5"></a>
+          <a class="btn size size-12" phx-click="size" phx-value-size="12"></a>
+          <a class="btn size size-22" phx-click="size" phx-value-size="22"></a>
+          <a class="btn size size-34" phx-click="size" phx-value-size="34"></a>
         </div>
 
-        <div class="panel misc">
-          <a class="btn clear" phx-click="clear">Clear</a>
+        <div class="panel misc text-right">
+          <a class="btn btn-secondary clear" phx-click="clear">Clear</a>
         </div>
       </div>
     <% end %>

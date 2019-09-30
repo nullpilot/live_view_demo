@@ -36,6 +36,17 @@ module.exports = (env, options) => ({
           // path is needed to prevent error with importing from deps
           { loader: 'postcss-loader', options: { config: { path: './' } } }
         ]
+      },
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192
+            }
+          }
+        ]
       }
     ]
   },

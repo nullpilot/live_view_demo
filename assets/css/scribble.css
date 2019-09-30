@@ -27,7 +27,7 @@ input[type=text] {
 }
 
 .btn {
-  @apply inline-block px-6 py-3 rounded-sm font-semibold text-sm text-center
+  @apply inline-block px-6 py-3 rounded-sm font-semibold text-sm text-center cursor-pointer select-none
 }
 
 .btn-primary {
@@ -49,7 +49,7 @@ input[type=text] {
 }
 
 .game {
-  min-width: 960px;
+  min-width: 1080px;
   display: grid;
   grid-template: auto 400px auto / 1fr 600px 1fr;
 }
@@ -70,17 +70,61 @@ input[type=text] {
   grid-area: 1 / 2 / span 1 / span 1;
   letter-spacing: 0.25em;
 
-  @apply text-2xl text-center;
+  @apply text-2xl text-center pb-2;
 }
 
 .playerlist {
   grid-area: 2 / 1 / span 1 / span 1;
+
+  .player {
+    @apply px-2 bg-gray-300;
+
+    .rank {
+      @apply font-bold w-8
+    }
+
+    .name {
+      @apply pl-2
+    }
+
+    .score {
+      @apply w-full flex-none pl-10
+    }
+  }
+
+  .player:nth-of-type(2n) {
+    @apply bg-gray-200
+  }
 }
 
 .board {
   box-shadow: 0 0 0 3px #eee;
   position: relative;
   grid-area: 2 / 2 / span 1 / span 1;
+}
+
+.cur-2 {
+  cursor: url("../static/images/cur_2.png"), default;
+}
+.cur-5 {
+  cursor: url("../static/images/cur_5.png"), default;
+}
+.cur-12 {
+  cursor: url("../static/images/cur_12.png"), default;
+}
+.cur-22 {
+  cursor: url("../static/images/cur_22.png"), default;
+}
+.cur-34 {
+  cursor: url("../static/images/cur_34.png"), default;
+}
+
+.drawing {
+  pointer-events: none;
+}
+
+.drawing.active-turn {
+  pointer-events: auto;
 }
 
 .drawing * {
@@ -137,11 +181,19 @@ input[type=text] {
 
 .controls {
   padding: 2rem 0 0 0;
-  grid-area: 3 / 2 / span 1 / span 1;
+  grid-area: 3 / 2 / span 1 / span 2;
+
+  @apply flex flex-row;
 }
 
 .panel {
   margin-bottom: 1rem;
+
+  @apply flex-none pr-4
+}
+
+.panel.misc {
+  @apply flex-1
 }
 
 .color {
@@ -153,7 +205,31 @@ input[type=text] {
 }
 
 .size {
-  @apply text-white bg-teal-500 px-4 w-12 py-2
+  background-repeat: no-repeat;
+  background-position: center;
+
+
+  @apply px-4 w-12 h-12 py-2;
+}
+
+.size-2 {
+  background-image: url("../static/images/size_2.png");
+}
+.size-5 {
+  background-image: url("../static/images/size_5.png");
+}
+.size-12 {
+  background-image: url("../static/images/size_12.png");
+}
+.size-22 {
+  background-image: url("../static/images/size_22.png");
+}
+.size-34 {
+  background-image: url("../static/images/size_34.png");
+}
+
+.clear {
+  @apply px-4 py-2
 }
 
 .drawing path {
@@ -161,27 +237,3 @@ input[type=text] {
   stroke-linejoin: round;
   shape-rendering: crispEdges;
 }
-
-/* .btn, button {
-  display: inline-block;
-  background: #06bafd;
-  color: #fff;
-  min-width: 2em;
-  padding: 4px 16px;
-  text-align: center;
-  cursor: pointer;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  font-weight: 600;
-  font-size: 1.5rem;
-  text-transform: none;
-  height: 3.8rem;
-  line-height: 3rem;
-  letter-spacing: .1rem;
-} */
-
-/* button:hover, .btn:hover {
-  color: #fff;
-  background: #0069d9;
-} */
