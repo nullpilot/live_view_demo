@@ -28,7 +28,7 @@ h2 {
 
 h1 span,
 h2 span {
-  @apply underline
+  @apply text-teal-300;
 }
 
 input[type=text] {
@@ -162,10 +162,12 @@ input[type=text] {
 
   h1 {
     @apply font-normal text-lg mb-0;
+    text-shadow: 2px 2px #000000;
   }
 
   h2 {
-    @apply text-lg mb-8
+    @apply text-lg mb-8;
+    text-shadow: 2px 2px #000000;
   }
 
   .pick-words {
