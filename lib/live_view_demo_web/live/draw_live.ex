@@ -10,7 +10,7 @@ defmodule LiveViewDemoWeb.DrawLive do
     Phoenix.View.render(LiveViewDemoWeb.DrawView, "index.html", assigns)
   end
 
-  def mount(_session, socket) do
+  def mount(_params, _session, socket) do
     host = Application.fetch_env!(:live_view_demo, LiveViewDemoWeb.Endpoint)
       |> Keyword.get(:url)
       |> Keyword.get(:host)
@@ -46,7 +46,7 @@ defmodule LiveViewDemoWeb.DrawLive do
 
   def handle_params(%{}, _url, socket) do
     room_slug = Base.url_encode64(:crypto.strong_rand_bytes(6))
-    {:noreply, live_redirect(socket, to: "/draw/" <> room_slug, replace: true)}
+    {:noreply, push_redirect(socket, to: "/draw/" <> room_slug, replace: true)}
   end
 
   def handle_info(%{event: "chat", payload: payload}, socket) do

@@ -13,9 +13,9 @@ config :live_view_demo,
 # Configures the endpoint
 config :live_view_demo, LiveViewDemoWeb.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: "dummy_val_for_dev_env",
-  render_errors: [view: LiveViewDemoWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: LiveViewDemo.PubSub, adapter: Phoenix.PubSub.PG2],
+  secret_key_base: "8er018Bb1+a/5Qb5UC9V2iIbHI1LZjk7/Yn4mQcvyttBweHEPsziZF9tm9obJYY7",
+  render_errors: [view: LiveViewDemoWeb.ErrorView, accepts: ~w(html json), layout: false],
+  pubsub_server: LiveViewDemo.PubSub,
   live_view: [
     signing_salt: "another_dummy_val_for_dev_env"
   ]

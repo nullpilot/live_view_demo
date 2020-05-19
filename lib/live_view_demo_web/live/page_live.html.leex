@@ -1,0 +1,11 @@
+<section class="max-w-md mx-auto">
+  <h1>How to play</h1>
+  <p>Draw words, guess what others are drawing! It's as easy as that.</p>
+
+  <div class="my-4">
+    <%= link "Join demo room", to: Routes.draw_path(@socket, :index, "demo"), class: "btn btn-primary w-48" %>
+  <div class="my-4">
+  </div>
+    <%= link "Create private room", to: Routes.draw_path(@socket, :index), class: "btn btn-secondary w-48" %>
+  </div>
+</section>

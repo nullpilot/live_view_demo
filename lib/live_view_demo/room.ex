@@ -287,7 +287,7 @@ defmodule LiveViewDemo.Room do
   def handle_cast({:pick_word, player_pid, word_index}, state) do
     word = Enum.at(state.word_options, String.to_integer(word_index))
 
-    state = state 
+    state = state
       |> set_word(word)
       |> broadcast
 
@@ -298,7 +298,7 @@ defmodule LiveViewDemo.Room do
   end
 
   def handle_cast({:draw, active_path}, state) do
-    state = state 
+    state = state
       |> Map.put(:active_path, active_path)
       |> broadcast
 

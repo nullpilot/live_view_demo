@@ -6,13 +6,16 @@ defmodule LiveViewDemo.Application do
   use Application
 
   def start(_type, _args) do
-    # List all child processes to be supervised
     children = [
       # Start the Ecto repository
       LiveViewDemo.Repo,
-      # Start the endpoint when the application starts
+      # Start the Telemetry supervisor
+      LiveViewDemoWeb.Telemetry,
+      # Start the PubSub system
+      {Phoenix.PubSub, name: LiveViewDemo.PubSub},
+      # Start the Endpoint (http/https)
       LiveViewDemoWeb.Endpoint,
-      # Starts a worker by calling: LiveViewDemo.Worker.start_link(arg)
+      # Start a worker by calling: LiveViewDemo.Worker.start_link(arg)
       # {LiveViewDemo.Worker, arg},
       LiveViewDemo.RoomSupervisor
     ]

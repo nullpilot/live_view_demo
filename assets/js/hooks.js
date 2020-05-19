@@ -44,7 +44,7 @@ export default {
 }
 
 function pushCoords(phxEvent, event) {
-  this.__view.pushWithReply("event", {
+  this.__view.pushWithReply(null, "event", {
     type: event.type,
     event: phxEvent,
     value: getCoords(event)
